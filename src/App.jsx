@@ -191,10 +191,6 @@ function Navbar({ variant, onSecretTitleClick }) {
     return (
       <nav className="navbar catalog-navbar glass">
         <Link to="/" className="nav-brand" onClick={clickSecretTitle}>Biblio</Link>
-        <div className="nav-links">
-          <Link to="/" className="nav-link">Início</Link>
-          <Link to="/admin-login" className="nav-link">Admin</Link>
-        </div>
       </nav>
     );
   }

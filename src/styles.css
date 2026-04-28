@@ -582,12 +582,6 @@ label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec
     grid-column: 2;
     justify-self: center;
   }
-  .catalog-navbar .nav-links {
-    grid-column: 1 / -1;
-    width: 100%;
-    justify-content: center;
-    padding-top: 10px;
-  }
   .nav-admin-head {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
