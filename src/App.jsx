@@ -176,11 +176,15 @@ function Navbar({ variant, onSecretTitleClick }) {
   const profile = getProfile();
   const nav = useNavigate();
   const loc = useLocation();
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
 
   function logout() { clearSession(); nav('/'); }
   function clickSecretTitle(event) {
     event.preventDefault();
     onSecretTitleClick();
+  }
+  function closeAdminMenu() {
+    setAdminMenuOpen(false);
   }
 
   if (variant === 'catalog') {
@@ -198,14 +202,24 @@ function Navbar({ variant, onSecretTitleClick }) {
   if (variant === 'admin' && admin) {
     return (
       <nav className="navbar glass">
-        <Link to="/admin" className="nav-brand" onClick={clickSecretTitle}>Biblio <span className="b-light">Admin</span></Link>
-        <div className="nav-links">
-          <Link to="/admin" className={`nav-link ${loc.pathname === '/admin' ? 'active' : ''}`}>Painel</Link>
-          <Link to="/admin/livros" className={`nav-link ${loc.pathname === '/admin/livros' ? 'active' : ''}`}>Livros</Link>
-          <Link to="/admin/usuarios" className={`nav-link ${loc.pathname === '/admin/usuarios' ? 'active' : ''}`}>Usuários</Link>
-          <Link to="/admin/emprestimos" className={`nav-link ${loc.pathname === '/admin/emprestimos' ? 'active' : ''}`}>Empréstimos</Link>
-          <Link to="/admin/fila" className={`nav-link ${loc.pathname === '/admin/fila' ? 'active' : ''}`}>Fila</Link>
-          <Link to="/admin/leituras" className={`nav-link ${loc.pathname === '/admin/leituras' ? 'active' : ''}`}>Leituras</Link>
+        <div className="nav-admin-head">
+          <Link to="/admin" className="nav-brand" onClick={clickSecretTitle}>Biblio <span className="b-light">Admin</span></Link>
+          <button
+            type="button"
+            className="btn sm ghost nav-menu-toggle"
+            onClick={() => setAdminMenuOpen(open => !open)}
+            aria-expanded={adminMenuOpen}
+          >
+            Menu
+          </button>
+        </div>
+        <div className={`nav-links admin-nav-links ${adminMenuOpen ? 'open' : ''}`}>
+          <Link onClick={closeAdminMenu} to="/admin" className={`nav-link ${loc.pathname === '/admin' ? 'active' : ''}`}>Painel</Link>
+          <Link onClick={closeAdminMenu} to="/admin/livros" className={`nav-link ${loc.pathname === '/admin/livros' ? 'active' : ''}`}>Livros</Link>
+          <Link onClick={closeAdminMenu} to="/admin/usuarios" className={`nav-link ${loc.pathname === '/admin/usuarios' ? 'active' : ''}`}>Usuários</Link>
+          <Link onClick={closeAdminMenu} to="/admin/emprestimos" className={`nav-link ${loc.pathname === '/admin/emprestimos' ? 'active' : ''}`}>Empréstimos</Link>
+          <Link onClick={closeAdminMenu} to="/admin/fila" className={`nav-link ${loc.pathname === '/admin/fila' ? 'active' : ''}`}>Fila</Link>
+          <Link onClick={closeAdminMenu} to="/admin/leituras" className={`nav-link ${loc.pathname === '/admin/leituras' ? 'active' : ''}`}>Leituras</Link>
           <NotificationBell />
           <span className="nav-user">{profile?.name || profile?.username}</span>
           <button className="btn sm ghost" onClick={logout}>Sair</button>

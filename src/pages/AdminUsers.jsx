@@ -144,7 +144,7 @@ export default function AdminUsers() {
 
             <div className="field">
               <label>Perfil</label>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="segmented-actions" style={{ display: 'flex', gap: 8 }}>
                 <button type="button"
                   className={`btn ${!form.is_admin ? 'accent' : 'ghost'}`}
                   style={{ flex: 1 }}
@@ -172,7 +172,7 @@ export default function AdminUsers() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
+            <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
               <button className="btn ghost" onClick={() => setEditing(null)}>Cancelar</button>
               <button className="btn primary" onClick={save} disabled={!form.name}>Salvar</button>
             </div>

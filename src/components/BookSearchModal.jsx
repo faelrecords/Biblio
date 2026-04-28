@@ -38,7 +38,7 @@ export default function BookSearchModal({ initialQuery = '', onPick, onClose }) 
         <div className="subtitle">Catálogo externo</div>
         <h2 style={{ marginBottom: 14 }}>Buscar livro online</h2>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <div className="book-search-bar" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <input
             ref={inputRef}
             className="input"
@@ -59,7 +59,7 @@ export default function BookSearchModal({ initialQuery = '', onPick, onClose }) 
 
         {!loading && results.length > 0 && (
           <>
-            <div style={{
+            <div className="book-search-results" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
               gap: 12,
@@ -109,7 +109,7 @@ export default function BookSearchModal({ initialQuery = '', onPick, onClose }) 
                 marginTop: 14, padding: 14, borderRadius: 12,
                 background: 'rgba(109,113,240,0.05)', border: '1px solid rgba(109,113,240,0.18)'
               }}>
-                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div className="book-search-selected" style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   {selected.cover_url && (
                     <img src={selected.cover_url} alt="" style={{
                       width: 70, height: 105, objectFit: 'cover', borderRadius: 6,
@@ -135,7 +135,7 @@ export default function BookSearchModal({ initialQuery = '', onPick, onClose }) 
           </>
         )}
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 18 }}>
+        <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 18 }}>
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
           <button className="btn accent" disabled={!selected} onClick={pick}>
             Usar este livro

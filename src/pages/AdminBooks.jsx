@@ -180,7 +180,7 @@ export default function AdminBooks() {
               <textarea className="textarea" value={form.synopsis} onChange={e => setForm({ ...form, synopsis: e.target.value })} />
             </div>
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
+            <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
               <button className="btn ghost" onClick={() => setEditing(null)}>Cancelar</button>
               <button className="btn primary" onClick={save} disabled={!form.title}>Salvar</button>
             </div>
