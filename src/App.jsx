@@ -189,8 +189,8 @@ function Navbar({ variant, onSecretTitleClick }) {
 
   if (variant === 'catalog') {
     return (
-      <nav className="navbar glass">
-        <Link to="/" className="nav-brand" onClick={clickSecretTitle}>Biblio <span className="b-light">Leitor</span></Link>
+      <nav className="navbar catalog-navbar glass">
+        <Link to="/" className="nav-brand" onClick={clickSecretTitle}>Biblio</Link>
         <div className="nav-links">
           <Link to="/" className="nav-link">Início</Link>
           <Link to="/admin-login" className="nav-link">Admin</Link>
@@ -203,7 +203,6 @@ function Navbar({ variant, onSecretTitleClick }) {
     return (
       <nav className="navbar glass">
         <div className="nav-admin-head">
-          <Link to="/admin" className="nav-brand" onClick={clickSecretTitle}>Biblio <span className="b-light">Admin</span></Link>
           <button
             type="button"
             className="btn sm ghost nav-menu-toggle"
@@ -212,6 +211,10 @@ function Navbar({ variant, onSecretTitleClick }) {
           >
             Menu
           </button>
+          <Link to="/admin" className="nav-brand" onClick={clickSecretTitle}>Biblio</Link>
+          <div className="nav-notifications-mobile">
+            <NotificationBell />
+          </div>
         </div>
         <div className={`nav-links admin-nav-links ${adminMenuOpen ? 'open' : ''}`}>
           <Link onClick={closeAdminMenu} to="/admin" className={`nav-link ${loc.pathname === '/admin' ? 'active' : ''}`}>Painel</Link>
@@ -220,7 +223,9 @@ function Navbar({ variant, onSecretTitleClick }) {
           <Link onClick={closeAdminMenu} to="/admin/emprestimos" className={`nav-link ${loc.pathname === '/admin/emprestimos' ? 'active' : ''}`}>Empréstimos</Link>
           <Link onClick={closeAdminMenu} to="/admin/fila" className={`nav-link ${loc.pathname === '/admin/fila' ? 'active' : ''}`}>Fila</Link>
           <Link onClick={closeAdminMenu} to="/admin/leituras" className={`nav-link ${loc.pathname === '/admin/leituras' ? 'active' : ''}`}>Leituras</Link>
-          <NotificationBell />
+          <div className="nav-notifications-desktop">
+            <NotificationBell />
+          </div>
           <span className="nav-user">{profile?.name || profile?.username}</span>
           <button className="btn sm ghost" onClick={logout}>Sair</button>
         </div>

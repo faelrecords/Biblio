@@ -56,7 +56,7 @@ export default function NotificationBell() {
   }
 
   return (
-    <div ref={popRef} style={{ position: 'relative' }}>
+    <div ref={popRef} className="notification-wrap" style={{ position: 'relative' }}>
       <button onClick={() => setOpen(v => !v)} title="Notificações"
         style={{
           width: 36, height: 36, borderRadius: '50%',
@@ -81,7 +81,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="glass glass-strong" style={{
+        <div className="notification-popover glass glass-strong" style={{
           position: 'absolute', top: 'calc(100% + 8px)', right: 0,
           width: 380, maxHeight: 500, overflow: 'auto',
           padding: 14, borderRadius: 16, zIndex: 100
