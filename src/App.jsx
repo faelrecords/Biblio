@@ -187,10 +187,7 @@ function Navbar({ variant, onSecretTitleClick }) {
     setAdminMenuOpen(false);
   }
   const brand = (
-    <>
-      <img className="nav-brand-icon" src="/biblio.png" alt="" />
-      <span>Biblio</span>
-    </>
+    <span>Biblio</span>
   );
 
   if (variant === 'catalog') {
