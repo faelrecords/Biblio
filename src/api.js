@@ -1,4 +1,4 @@
-const BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+const BASE = '/api';
 
 export function getToken() { return localStorage.getItem('token'); }
 export function setSession(token, profile) {
@@ -12,6 +12,14 @@ export function clearSession() {
 export function getProfile() {
   const p = localStorage.getItem('profile');
   return p ? JSON.parse(p) : null;
+}
+export function isUser() {
+  const t = getToken();
+  if (!t) return false;
+  try {
+    const payload = JSON.parse(atob(t.split('.')[1]));
+    return payload.role === 'user' && !payload.is_admin;
+  } catch { return false; }
 }
 export function isAdmin() {
   const t = getToken();

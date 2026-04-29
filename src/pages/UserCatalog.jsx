@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { api, clearSession, getProfile } from '../api';
 
 function fmtDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-export default function UserCatalog() {
+export default function UserCatalog({ anonymous = false }) {
+  const loc = useLocation();
+  const nav = useNavigate();
+  const isAnonymous = anonymous || loc.pathname === '/semlogin';
+  const profile = isAnonymous ? null : getProfile();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -32,11 +37,31 @@ export default function UserCatalog() {
 
   if (loading) return <div className="container"><div className="spinner" /></div>;
 
+  function logout() {
+    clearSession();
+    nav('/');
+  }
+
   return (
     <div className="container">
       <div className="subtitle">Acervo</div>
       <h1>Encontre seu próximo livro</h1>
-      <p className="hero-sub">Navegue pelas categorias e solicite empréstimo com seu código pessoal.</p>
+      <p className="hero-sub">
+        {profile ? `Olá, ${profile.name}. Solicitações usam seu cadastro automaticamente.` : 'Navegue pelas categorias e solicite empréstimo com seu código pessoal.'}
+      </p>
+
+      {profile && (
+        <div className="reader-session glass">
+          <span>{profile.name}</span>
+          <button className="btn sm ghost" onClick={logout}>Sair</button>
+        </div>
+      )}
+      {isAnonymous && (
+        <div className="reader-session glass">
+          <span>Acesso sem login</span>
+          <Link className="btn sm ghost" to="/">Entrar</Link>
+        </div>
+      )}
 
       {topReaders.length > 0 && (
         <div className="glass list-card" style={{ marginBottom: 24 }}>
@@ -96,7 +121,7 @@ export default function UserCatalog() {
         </div>
       ))}
 
-      {selected && <BookModal book={selected} onClose={() => setSelected(null)} onUpdate={load} />}
+      {selected && <BookModal book={selected} profile={profile} anonymous={isAnonymous} onClose={() => setSelected(null)} onUpdate={load} />}
     </div>
   );
 }
@@ -128,17 +153,28 @@ function BookCard({ book, onClick }) {
   );
 }
 
-function BookModal({ book, onClose, onUpdate }) {
+function BookModal({ book, profile, anonymous, onClose, onUpdate }) {
   const [step, setStep] = useState('detail'); // detail | code-request | code-waitlist | code-renew | success-request | success-waitlist | success-renew
   const [code, setCode] = useState('');
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState({});
+  const useLoggedUser = !!profile && !anonymous;
+
+  function actionPayload() {
+    return useLoggedUser ? { book_id: book.id } : { book_id: book.id, code };
+  }
+
+  function openCodeStep(nextStep) {
+    setStep(nextStep);
+    setCode('');
+    setErr('');
+  }
 
   async function request() {
     setErr(''); setLoading(true);
     try {
-      const r = await api.post('/loans/request', { book_id: book.id, code });
+      const r = await api.post('/loans/request', actionPayload());
       setResult(r);
       setStep('success-request');
       onUpdate();
@@ -157,7 +193,7 @@ function BookModal({ book, onClose, onUpdate }) {
   async function joinWaitlist() {
     setErr(''); setLoading(true);
     try {
-      const r = await api.post('/waitlist/join', { book_id: book.id, code });
+      const r = await api.post('/waitlist/join', actionPayload());
       setResult(r);
       setStep('success-waitlist');
       onUpdate();
@@ -168,7 +204,7 @@ function BookModal({ book, onClose, onUpdate }) {
   async function renew() {
     setErr(''); setLoading(true);
     try {
-      const r = await api.post('/loans/renew-by-book', { book_id: book.id, code });
+      const r = await api.post('/loans/renew-by-book', actionPayload());
       setResult(r);
       setStep('success-renew');
       onUpdate();
@@ -179,7 +215,7 @@ function BookModal({ book, onClose, onUpdate }) {
   async function returnBook() {
     setErr(''); setLoading(true);
     try {
-      const r = await api.post('/loans/return-by-book', { book_id: book.id, code });
+      const r = await api.post('/loans/return-by-book', actionPayload());
       setResult(r);
       setStep('success-return');
       onUpdate();
@@ -217,21 +253,22 @@ function BookModal({ book, onClose, onUpdate }) {
                 {book.waitlist_count > 0 && <span className="badge pending" style={{ marginLeft: 8 }}>{book.waitlist_count} na fila</span>}
               </div>
 
+              {err && <div className="error-msg">{err}</div>}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {book.status === 'available' && (
-                  <button className="btn accent" onClick={() => { setStep('code-request'); setCode(''); setErr(''); }}>
+                  <button className="btn accent" onClick={() => (useLoggedUser ? request() : openCodeStep('code-request'))} disabled={loading}>
                     Solicitar empréstimo
                   </button>
                 )}
                 {book.status === 'borrowed' && (
                   <>
-                    <button className="btn accent" onClick={() => { setStep('code-waitlist'); setCode(''); setErr(''); }}>
+                    <button className="btn accent" onClick={() => (useLoggedUser ? joinWaitlist() : openCodeStep('code-waitlist'))} disabled={loading}>
                       Entrar na fila
                     </button>
-                    <button className="btn ghost" onClick={() => { setStep('code-renew'); setCode(''); setErr(''); }}>
+                    <button className="btn ghost" onClick={() => (useLoggedUser ? renew() : openCodeStep('code-renew'))} disabled={loading}>
                       Renovar
                     </button>
-                    <button className="btn ghost" onClick={() => { setStep('code-return'); setCode(''); setErr(''); }}>
+                    <button className="btn ghost" onClick={() => (useLoggedUser ? returnBook() : openCodeStep('code-return'))} disabled={loading}>
                       Devolver
                     </button>
                   </>
