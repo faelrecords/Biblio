@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
-import { isAdmin, getProfile, clearSession } from './api';
+import { isAdmin, isUser, getProfile, clearSession } from './api';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import UserCatalog from './pages/UserCatalog';
@@ -193,6 +193,7 @@ function Navbar({ variant, onSecretTitleClick }) {
     return (
       <nav className="navbar catalog-navbar glass">
         <Link to="/" className="nav-brand" onClick={clickSecretTitle}>{brand}</Link>
+        {isUser() && <NotificationBell reader />}
       </nav>
     );
   }

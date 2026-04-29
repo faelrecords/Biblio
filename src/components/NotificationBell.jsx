@@ -11,12 +11,15 @@ const typeLabels = {
   loan_auto: 'Empréstimo',
   waitlist_join: 'Fila',
   waitlist_turn: 'Vez na fila',
+  reader_waitlist_turn: 'Sua vez',
+  reader_due_soon: 'Vence em breve',
+  reader_overdue: 'Atrasado',
   due_soon_with_queue: 'Vence em breve',
-  overdue_with_queue: 'Atrasado',
+  overdue: 'Atrasado',
   self_return: 'Devolução'
 };
 
-export default function NotificationBell() {
+export default function NotificationBell({ reader = false }) {
   const [open, setOpen] = useState(false);
   const [list, setList] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -25,7 +28,7 @@ export default function NotificationBell() {
 
   async function load() {
     try {
-      const r = await api.get('/notifications');
+      const r = await api.get(reader ? '/me/notifications' : '/notifications');
       setList(r.list); setUnread(r.unread);
     } catch {}
   }
@@ -42,14 +45,17 @@ export default function NotificationBell() {
   }, []);
 
   async function markAll() {
-    await api.post('/notifications/read-all', {});
+    await api.post(reader ? '/me/notifications/read-all' : '/notifications/read-all', {});
     load();
   }
 
   async function openNotif(n) {
-    if (!n.read) await api.post(`/notifications/${n.id}/read`, {});
+    if (!n.read) {
+      await api.post(reader ? `/me/notifications/${n.id}/read` : `/notifications/${n.id}/read`, {});
+    }
     setOpen(false);
-    if (n.type === 'loan_request' || n.type === 'loan_auto') nav('/admin/emprestimos');
+    if (reader) nav('/catalogo');
+    else if (n.type === 'loan_request' || n.type === 'loan_auto') nav('/admin/emprestimos');
     else if (n.type === 'waitlist_join' || n.type === 'waitlist_turn') nav('/admin/fila');
     else if (n.loan_id) nav('/admin/emprestimos');
     load();
