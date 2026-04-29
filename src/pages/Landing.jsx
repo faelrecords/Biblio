@@ -49,7 +49,7 @@ export default function Landing({ onSecretTitleClick }) {
         password
       });
       setSession(result.token, result.user);
-      nav('/catalogo');
+      nav(result.user?.force_password_change ? '/primeiro-acesso' : '/catalogo');
     } catch (error) {
       if (/usuário não existe/i.test(error.message) && identifier.trim()) {
         setRegister(current => ({

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { isAdmin, isUser, getProfile, clearSession } from './api';
 import Landing from './pages/Landing';
+import CompleteSetup from './pages/CompleteSetup';
 import Login from './pages/Login';
 import UserCatalog from './pages/UserCatalog';
 import AdminDashboard from './pages/AdminDashboard';
@@ -259,6 +260,7 @@ export default function App() {
       {isAdminPage && <Navbar variant="admin" onSecretTitleClick={handleSecretTitleClick} />}
       <Routes>
         <Route path="/" element={<Landing onSecretTitleClick={handleSecretTitleClick} />} />
+        <Route path="/primeiro-acesso" element={<CompleteSetup />} />
         <Route path="/catalogo" element={<UserCatalog />} />
         <Route path="/semlogin" element={<UserCatalog anonymous />} />
         <Route path="/admin-login" element={<Login />} />

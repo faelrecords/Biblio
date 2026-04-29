@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { api, clearSession, getProfile } from '../api';
 
 function fmtDate(iso) {
@@ -36,6 +36,7 @@ export default function UserCatalog({ anonymous = false }) {
   }, {});
 
   if (loading) return <div className="container"><div className="spinner" /></div>;
+  if (profile?.force_password_change && !isAnonymous) return <Navigate to="/primeiro-acesso" replace />;
 
   function logout() {
     clearSession();
