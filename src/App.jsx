@@ -186,11 +186,17 @@ function Navbar({ variant, onSecretTitleClick }) {
   function closeAdminMenu() {
     setAdminMenuOpen(false);
   }
+  const brand = (
+    <>
+      <img className="nav-brand-icon" src="/biblio.png" alt="" />
+      <span>Biblio</span>
+    </>
+  );
 
   if (variant === 'catalog') {
     return (
       <nav className="navbar catalog-navbar glass">
-        <Link to="/" className="nav-brand" onClick={clickSecretTitle}>Biblio</Link>
+        <Link to="/" className="nav-brand" onClick={clickSecretTitle}>{brand}</Link>
       </nav>
     );
   }
@@ -207,7 +213,7 @@ function Navbar({ variant, onSecretTitleClick }) {
           >
             Menu
           </button>
-          <Link to="/admin" className="nav-brand" onClick={clickSecretTitle}>Biblio</Link>
+          <Link to="/admin" className="nav-brand" onClick={clickSecretTitle}>{brand}</Link>
           <div className="nav-notifications-mobile">
             <NotificationBell />
           </div>
