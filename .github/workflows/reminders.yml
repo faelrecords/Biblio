@@ -1,0 +1,24 @@
+name: Biblio reminders
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reminders endpoint
+        env:
+          API_URL: https://xpwejczbdwjdvgjmxzsg.supabase.co/functions/v1/api
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Missing CRON_SECRET repository secret"
+            exit 1
+          fi
+
+          curl --fail --silent --show-error \
+            --request POST "$API_URL/cron/reminders" \
+            --header "x-cron-secret: $CRON_SECRET"
