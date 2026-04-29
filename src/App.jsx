@@ -124,48 +124,16 @@ function applyThemeVariables(vars) {
   }
 }
 
-function SecretPopup({ onClose, onApplyTheme, onResetTheme, themeInfo }) {
-  const fileRef = useRef(null);
-  const [message, setMessage] = useState(themeInfo ? `Tema atual: ${themeInfo.source}` : 'Tema padrão ativo.');
-
-  async function uploadTheme(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const vars = parseThemeMarkdown(text);
-      const count = Object.keys(vars).length;
-      if (!count) {
-        setMessage('Nenhuma cor válida encontrada.');
-        return;
-      }
-      onApplyTheme(vars, file.name);
-      setMessage(`${count} cores aplicadas.`);
-    } catch {
-      setMessage('Falha ao ler arquivo.');
-    } finally {
-      event.target.value = '';
-    }
-  }
-
-  function resetTheme() {
-    onResetTheme();
-    setMessage('Tema padrão restaurado.');
-  }
-
+function SecretPopup({ onClose }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal small glass glass-strong" onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
         <button className="modal-close" onClick={onClose}>×</button>
-        <div className="subtitle" style={{ textAlign: 'center' }}>Função secreta</div>
-        <h2 style={{ marginBottom: 14 }}>Tema secreto</h2>
-        <input ref={fileRef} type="file" accept=".md,text/markdown,text/plain" onChange={uploadTheme} style={{ display: 'none' }} />
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button className="btn accent" onClick={() => fileRef.current?.click()}>Upload .md</button>
-          <button className="btn ghost" onClick={resetTheme}>Padrão</button>
-        </div>
-        <div className="hint" style={{ marginTop: 14 }}>{message}</div>
+        <div className="subtitle" style={{ textAlign: 'center' }}>Easter egg</div>
+        <h2 style={{ marginBottom: 14 }}>Parabéns você descobriu um easter egg, segue nois no instagram ae</h2>
+        <a className="btn accent" href="https://instagram.com/fael.records" target="_blank" rel="noreferrer">
+          Abrir Instagram
+        </a>
       </div>
     </div>
   );

@@ -7,14 +7,33 @@ function daysLeft(dueAt) {
   return Math.ceil((new Date(dueAt) - new Date()) / 86400000);
 }
 
+function dateInput(daysAgo = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString().slice(0, 10);
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return 'nunca';
+  return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
 export default function AdminDashboard() {
   const [loans, setLoans] = useState([]);
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
   const [waitlist, setWaitlist] = useState([]);
-  const [settings, setSettings] = useState({ auto_approve: true, default_days: 14, default_waitlist_hold_hours: 24, show_top_readers: false });
+  const [settings, setSettings] = useState({
+    auto_approve: true,
+    default_days: 14,
+    default_waitlist_hold_hours: 24,
+    show_top_readers: false,
+    notifications_last_cleanup_at: null,
+    notifications_cleanup_reminder_sent: false
+  });
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(null);
+  const [cleanup, setCleanup] = useState({ start: dateInput(90), end: dateInput(0), message: '' });
 
   async function load() {
     const [l, b, u, w, s] = await Promise.all([
@@ -29,6 +48,17 @@ export default function AdminDashboard() {
   async function patchSettings(patch) {
     const s = await api.put('/settings', patch);
     setSettings(s);
+  }
+
+  async function cleanupNotifications() {
+    if (!cleanup.start || !cleanup.end) return;
+    if (!window.confirm('Excluir notificações desse período?')) return;
+    const result = await api.post('/notifications/cleanup', {
+      start: `${cleanup.start}T00:00:00`,
+      end: `${cleanup.end}T23:59:59`
+    });
+    setSettings(result.settings);
+    setCleanup(current => ({ ...current, message: `${result.deleted} notificações excluídas.` }));
   }
 
   if (loading) return <div className="container"><div className="spinner" /></div>;
@@ -113,6 +143,30 @@ export default function AdminDashboard() {
                      if (n >= 0) patchSettings({ default_waitlist_hold_hours: n });
                    }} />
           </div>
+        </div>
+      </div>
+
+      <div className="glass list-card" style={{ marginBottom: 20 }}>
+        <h2 style={{ marginBottom: 14 }}>Limpeza de notificações</h2>
+        <div className="hint" style={{ marginBottom: 14 }}>
+          Última limpeza: {fmtDateTime(settings.notifications_last_cleanup_at)}
+        </div>
+        {cleanup.message && <div className="success-msg">{cleanup.message}</div>}
+        <div className="grid-2">
+          <div className="field" style={{ margin: 0 }}>
+            <label>Data inicial</label>
+            <input className="input" type="date" value={cleanup.start}
+                   onChange={e => setCleanup({ ...cleanup, start: e.target.value, message: '' })} />
+          </div>
+          <div className="field" style={{ margin: 0 }}>
+            <label>Data final</label>
+            <input className="input" type="date" value={cleanup.end}
+                   onChange={e => setCleanup({ ...cleanup, end: e.target.value, message: '' })} />
+          </div>
+        </div>
+        <div className="toolbar" style={{ marginTop: 14, marginBottom: 0 }}>
+          <div className="hint">O lembrete volta 90 dias após a limpeza.</div>
+          <button className="btn danger" onClick={cleanupNotifications}>Excluir notificações</button>
         </div>
       </div>
 

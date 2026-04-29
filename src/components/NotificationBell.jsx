@@ -14,6 +14,7 @@ const typeLabels = {
   reader_waitlist_turn: 'Sua vez',
   reader_due_soon: 'Vence em breve',
   reader_overdue: 'Atrasado',
+  notification_cleanup_due: 'Limpeza',
   due_soon_with_queue: 'Vence em breve',
   overdue: 'Atrasado',
   self_return: 'Devolução'
