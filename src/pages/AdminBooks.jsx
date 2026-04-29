@@ -6,6 +6,7 @@ import BookSearchModal from '../components/BookSearchModal';
 
 const empty = {
   title: '', author: '', category: '', cover_url: '', synopsis: '',
+  owner_name: 'Empresa',
   default_days: 14,
   auto_approve_override: 'inherit', // 'inherit' | 'auto' | 'manual'
   waitlist_hold_hours: ''
@@ -40,6 +41,7 @@ export default function AdminBooks() {
     setForm({
       title: b.title, author: b.author, category: b.category,
       cover_url: b.cover_url, synopsis: b.synopsis,
+      owner_name: b.owner_name || 'Empresa',
       default_days: b.default_days || 14,
       auto_approve_override: aa,
       waitlist_hold_hours: typeof b.waitlist_hold_hours === 'number' ? String(b.waitlist_hold_hours) : ''
@@ -54,6 +56,7 @@ export default function AdminBooks() {
     const payload = {
       title: form.title, author: form.author, category: form.category,
       cover_url: form.cover_url, synopsis: form.synopsis,
+      owner_name: form.owner_name || 'Empresa',
       default_days: parseInt(form.default_days, 10) || 14,
       auto_approve_override,
       waitlist_hold_hours: form.waitlist_hold_hours === '' ? null : parseInt(form.waitlist_hold_hours, 10)
@@ -90,7 +93,7 @@ export default function AdminBooks() {
             <div>
               <div className="list-main-title">{b.title}</div>
               <div className="list-main-sub">
-                {b.author} · {b.category} · {b.default_days || 14} dias
+                {b.author} · {b.category} · {b.default_days || 14} dias · pertence a {b.owner_name || 'Empresa'}
                 {b.auto_approve_override === true && <span className="badge approved" style={{ marginLeft: 8 }}>auto</span>}
                 {b.auto_approve_override === false && <span className="badge pending" style={{ marginLeft: 8 }}>manual</span>}
                 {b.status === 'borrowed' && <span className="badge approved" style={{ marginLeft: 8 }}>emprestado</span>}
@@ -148,6 +151,14 @@ export default function AdminBooks() {
                 <input type="number" min={1} className="input" value={form.default_days}
                        onChange={e => setForm({ ...form, default_days: e.target.value })} />
               </div>
+              <div className="field">
+                <label>Pertence a</label>
+                <input className="input" value={form.owner_name}
+                       onChange={e => setForm({ ...form, owner_name: e.target.value })}
+                       placeholder="Empresa" />
+              </div>
+            </div>
+            <div className="grid-2">
               <div className="field">
                 <label>Aprovação</label>
                 <select className="input" value={form.auto_approve_override}
