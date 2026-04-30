@@ -48,7 +48,7 @@ export default function UserCatalog({ anonymous = false }) {
       <div className="subtitle">Acervo</div>
       <h1>Encontre seu próximo livro</h1>
       <p className="hero-sub">
-        {profile ? `Olá, ${profile.name}. Solicitações usam seu cadastro automaticamente.` : 'Navegue pelas categorias e solicite empréstimo com seu código pessoal.'}
+        {profile ? `Olá, ${profile.name}. Acesso somente leitura.` : 'Navegue pelas categorias disponíveis.'}
       </p>
 
       {profile && (
@@ -255,26 +255,7 @@ function BookModal({ book, profile, anonymous, onClose, onUpdate }) {
               </div>
 
               {err && <div className="error-msg">{err}</div>}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {book.status === 'available' && (
-                  <button className="btn accent" onClick={() => (useLoggedUser ? request() : openCodeStep('code-request'))} disabled={loading}>
-                    Solicitar empréstimo
-                  </button>
-                )}
-                {book.status === 'borrowed' && (
-                  <>
-                    <button className="btn accent" onClick={() => (useLoggedUser ? joinWaitlist() : openCodeStep('code-waitlist'))} disabled={loading}>
-                      Entrar na fila
-                    </button>
-                    <button className="btn ghost" onClick={() => (useLoggedUser ? renew() : openCodeStep('code-renew'))} disabled={loading}>
-                      Renovar
-                    </button>
-                    <button className="btn ghost" onClick={() => (useLoggedUser ? returnBook() : openCodeStep('code-return'))} disabled={loading}>
-                      Devolver
-                    </button>
-                  </>
-                )}
-              </div>
+              <div className="hint">Ações de empréstimo são feitas pelo administrador.</div>
             </div>
           </div>
         )}
