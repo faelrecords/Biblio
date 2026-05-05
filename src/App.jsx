@@ -186,6 +186,7 @@ function Navbar({ variant, onSecretTitleClick }) {
         </div>
         <div className={`nav-links admin-nav-links ${adminMenuOpen ? 'open' : ''}`}>
           <Link onClick={closeAdminMenu} to="/admin" className={`nav-link ${loc.pathname === '/admin' ? 'active' : ''}`}>Painel</Link>
+          <Link onClick={closeAdminMenu} to="/admin/biblioteca" className={`nav-link ${loc.pathname === '/admin/biblioteca' ? 'active' : ''}`}>Biblioteca</Link>
           <Link onClick={closeAdminMenu} to="/admin/livros" className={`nav-link ${loc.pathname === '/admin/livros' ? 'active' : ''}`}>Livros</Link>
           <Link onClick={closeAdminMenu} to="/admin/usuarios" className={`nav-link ${loc.pathname === '/admin/usuarios' ? 'active' : ''}`}>Usuários</Link>
           <Link onClick={closeAdminMenu} to="/admin/emprestimos" className={`nav-link ${loc.pathname === '/admin/emprestimos' ? 'active' : ''}`}>Empréstimos</Link>
@@ -265,6 +266,7 @@ export default function App() {
         <Route path="/semlogin" element={<UserCatalog anonymous />} />
         <Route path="/admin-login" element={<Login />} />
         <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+        <Route path="/admin/biblioteca" element={<AdminGuard><UserCatalog /></AdminGuard>} />
         <Route path="/admin/livros" element={<AdminGuard><AdminBooks /></AdminGuard>} />
         <Route path="/admin/usuarios" element={<AdminGuard><AdminUsers /></AdminGuard>} />
         <Route path="/admin/emprestimos" element={<AdminGuard><AdminLoans /></AdminGuard>} />
