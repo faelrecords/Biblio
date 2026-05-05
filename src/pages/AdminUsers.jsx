@@ -11,6 +11,10 @@ export default function AdminUsers() {
   const [form, setForm] = useState(emptyForm);
   const [err, setErr] = useState('');
   const [showCreated, setShowCreated] = useState(null);
+  const [noticeUser, setNoticeUser] = useState(null);
+  const [notice, setNotice] = useState({ title: 'Aviso da biblioteca', message: '' });
+  const [noticeErr, setNoticeErr] = useState('');
+  const [noticeLoading, setNoticeLoading] = useState(false);
   const me = getProfile();
 
   async function load() {
@@ -60,6 +64,29 @@ export default function AdminUsers() {
     load();
   }
 
+  function openNotice(user) {
+    setNoticeUser(user);
+    setNotice({ title: 'Aviso da biblioteca', message: '' });
+    setNoticeErr('');
+  }
+
+  async function sendNotice() {
+    setNoticeErr('');
+    setNoticeLoading(true);
+    try {
+      await api.post('/notifications/send-user', {
+        user_id: noticeUser.id,
+        title: notice.title,
+        message: notice.message
+      });
+      setNoticeUser(null);
+    } catch (e) {
+      setNoticeErr(e.message);
+    } finally {
+      setNoticeLoading(false);
+    }
+  }
+
   const passwordLabel = editing === 'new'
     ? (form.is_admin ? 'Senha do admin' : 'Senha temporária')
     : (form.is_admin ? 'Nova senha (em branco mantém)' : 'Nova senha temporária (em branco mantém)');
@@ -102,6 +129,7 @@ export default function AdminUsers() {
                   </span>
                 ) : (
                   <>
+                    <button className="btn sm ghost" onClick={() => openNotice(u)}>Enviar aviso</button>
                     <button className="btn sm" onClick={() => openEdit(u)}>Editar</button>
                     {!u.is_super && <button className="btn sm danger" onClick={() => remove(u.id)}>Excluir</button>}
                   </>
@@ -195,6 +223,44 @@ export default function AdminUsers() {
             <button className="btn accent" onClick={() => setShowCreated(null)}>
               Fechar
             </button>
+          </div>
+        </div>
+      )}
+
+      {noticeUser && (
+        <div className="modal-backdrop" onClick={() => setNoticeUser(null)}>
+          <div className="modal glass glass-strong small" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setNoticeUser(null)}>×</button>
+            <div className="subtitle">Aviso</div>
+            <h2 style={{ marginBottom: 16 }}>Enviar aviso</h2>
+            <p className="hint" style={{ marginBottom: 14 }}>
+              Destino: <strong>{noticeUser.name}</strong>
+            </p>
+            {noticeErr && <div className="error-msg">{noticeErr}</div>}
+            <div className="field">
+              <label>Título</label>
+              <input
+                className="input"
+                value={notice.title}
+                onChange={e => setNotice({ ...notice, title: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label>Aviso</label>
+              <textarea
+                className="textarea"
+                autoFocus
+                value={notice.message}
+                onChange={e => setNotice({ ...notice, message: e.target.value })}
+                placeholder="Digite o aviso..."
+              />
+            </div>
+            <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
+              <button className="btn ghost" onClick={() => setNoticeUser(null)}>Cancelar</button>
+              <button className="btn accent" onClick={sendNotice} disabled={noticeLoading || !notice.message.trim()}>
+                {noticeLoading ? 'Enviando...' : 'Enviar'}
+              </button>
+            </div>
           </div>
         </div>
       )}
