@@ -44,7 +44,7 @@ export default function CompleteSetup() {
         <form onSubmit={submit}>
           {err && <div className="error-msg">{err}</div>}
           <div className="field">
-            <label>Código do mercadinho</label>
+            <label>Cadastre um código de usuário</label>
             <input
               className="input"
               value={accessCode}
