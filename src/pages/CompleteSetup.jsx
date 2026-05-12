@@ -12,7 +12,7 @@ export default function CompleteSetup() {
   const [loading, setLoading] = useState(false);
 
   if (!profile) return <Navigate to="/" replace />;
-  if (!profile.force_password_change) return <Navigate to="/catalogo" replace />;
+  if (!profile.force_password_change) return <Navigate to={profile.is_admin ? '/admin' : '/catalogo'} replace />;
 
   async function submit(event) {
     event.preventDefault();
@@ -28,7 +28,7 @@ export default function CompleteSetup() {
         password
       });
       setSession(result.token, result.user);
-      nav('/catalogo');
+      nav(result.user?.is_admin ? '/admin' : '/catalogo');
     } catch (error) {
       setErr(error.message);
     } finally {

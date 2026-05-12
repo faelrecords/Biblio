@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { api, setSession } from '../api';
 
@@ -19,8 +19,9 @@ export default function Landing({ onSecretTitleClick }) {
         password
       });
       setSession(result.token, result.user);
-      if (result.user?.is_admin) nav('/admin');
-      else nav(result.user?.force_password_change ? '/primeiro-acesso' : '/catalogo');
+      if (result.user?.force_password_change) nav('/primeiro-acesso');
+      else if (result.user?.is_admin) nav('/admin');
+      else nav('/catalogo');
     } catch (error) {
       if (/usuário não existe/i.test(error.message)) {
         setErr('Usuário não existe. Solicite seu cadastro ao administrador.');
@@ -65,9 +66,6 @@ export default function Landing({ onSecretTitleClick }) {
             <button className="btn accent block" disabled={loading}>
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
-            <Link to="/semlogin" className="btn ghost block">
-              Acessar sem login
-            </Link>
           </div>
         </form>
       </div>

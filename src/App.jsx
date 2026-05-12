@@ -215,7 +215,7 @@ export default function App() {
   const [secretOpen, setSecretOpen] = useState(false);
   const [themeInfo, setThemeInfo] = useState(null);
   const secretClicks = useRef({ count: 0, timer: null });
-  const isCatalog = loc.pathname === '/catalogo' || loc.pathname === '/semlogin';
+  const isCatalog = loc.pathname === '/catalogo';
   const isAdminPage = loc.pathname.startsWith('/admin') && loc.pathname !== '/admin-login';
 
   useEffect(() => {
@@ -263,7 +263,6 @@ export default function App() {
         <Route path="/" element={<Landing onSecretTitleClick={handleSecretTitleClick} />} />
         <Route path="/primeiro-acesso" element={<CompleteSetup />} />
         <Route path="/catalogo" element={<UserCatalog />} />
-        <Route path="/semlogin" element={<UserCatalog anonymous />} />
         <Route path="/admin-login" element={<Login />} />
         <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
         <Route path="/admin/biblioteca" element={<AdminGuard><UserCatalog /></AdminGuard>} />
