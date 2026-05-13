@@ -1,6 +1,23 @@
-const BASE = import.meta.env.VITE_API_URL || 'https://xpwejczbdwjdvgjmxzsg.supabase.co/functions/v1/api';
+const BASE = import.meta.env.VITE_API_URL || (
+  window.location.hostname.endsWith('github.io')
+    ? 'https://xpwejczbdwjdvgjmxzsg.supabase.co/functions/v1/api'
+    : '/api'
+);
 
 export function getToken() { return localStorage.getItem('token'); }
+
+function decodeJwtPayload(token) {
+  try {
+    const part = token?.split('.')[1];
+    if (!part) return null;
+    const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
 export function setSession(token, profile) {
   localStorage.setItem('token', token);
   if (profile) localStorage.setItem('profile', JSON.stringify(profile));
@@ -11,30 +28,28 @@ export function clearSession() {
 }
 export function getProfile() {
   const p = localStorage.getItem('profile');
-  return p ? JSON.parse(p) : null;
+  if (p) {
+    try { return JSON.parse(p); } catch { localStorage.removeItem('profile'); }
+  }
+  const payload = decodeJwtPayload(getToken());
+  return payload?.id ? payload : null;
 }
 export function isUser() {
   const t = getToken();
   if (!t) return false;
-  try {
-    const payload = JSON.parse(atob(t.split('.')[1]));
-    return payload.role === 'user' && !payload.is_admin;
-  } catch { return false; }
+  const payload = decodeJwtPayload(t);
+  return !!payload && payload.role === 'user' && !payload.is_admin;
 }
 export function isAdmin() {
   const t = getToken();
   if (!t) return false;
-  try {
-    const payload = JSON.parse(atob(t.split('.')[1]));
-    return !!payload.is_admin;
-  } catch { return false; }
+  const payload = decodeJwtPayload(t);
+  return !!payload?.is_admin;
 }
 export function getAuthId() {
   const t = getToken();
   if (!t) return null;
-  try {
-    return JSON.parse(atob(t.split('.')[1])).id;
-  } catch { return null; }
+  return decodeJwtPayload(t)?.id || null;
 }
 
 async function request(path, opts = {}) {
