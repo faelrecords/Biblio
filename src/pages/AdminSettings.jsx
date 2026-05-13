@@ -127,21 +127,55 @@ export default function AdminSettings() {
       </div>
 
       <div className="glass list-card" style={{ marginBottom: 20 }}>
-        <h2 style={{ marginBottom: 14 }}>Categorias</h2>
+        <div className="toolbar" style={{ marginBottom: 14 }}>
+          <div>
+            <h2 style={{ marginBottom: 4 }}>Categorias</h2>
+            <div className="hint">{categories.length} categoria{categories.length === 1 ? '' : 's'} cadastrada{categories.length === 1 ? '' : 's'}</div>
+          </div>
+        </div>
         {message && <div className="success-msg">{message}</div>}
-        <form onSubmit={addCategory} className="toolbar" style={{ marginBottom: 14 }}>
+        <form onSubmit={addCategory} className="category-form" style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input className="input" value={categoryName}
                  onChange={e => { setCategoryName(e.target.value); setMessage(''); }}
                  placeholder="Nova categoria" />
-          <button className="btn accent">Cadastrar</button>
+          <button className="btn accent" aria-label="Cadastrar categoria">+</button>
         </form>
         {categories.length === 0 && <div className="empty-state">Nenhuma categoria cadastrada.</div>}
-        {categories.map(name => (
-          <div key={name} className="list-row">
-            <div className="list-main-title">{name}</div>
-            <button className="btn sm danger" onClick={() => removeCategory(name)}>Excluir</button>
-          </div>
-        ))}
+        <div className="category-chip-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {categories.map(name => (
+            <div key={name} className="category-chip" style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 10px 8px 12px',
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-secondary)',
+              fontSize: 13,
+              fontWeight: 600
+            }}>
+              <span>{name}</span>
+              <button
+                type="button"
+                onClick={() => removeCategory(name)}
+                aria-label={`Excluir ${name}`}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  border: '1px solid var(--border)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: 'var(--text-tertiary)',
+                  cursor: 'pointer',
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="glass list-card" style={{ marginBottom: 20 }}>
