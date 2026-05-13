@@ -129,7 +129,7 @@ export default function AdminUsers() {
                   </span>
                 ) : (
                   <>
-                    <button className="btn sm ghost" onClick={() => openNotice(u)}>Enviar aviso</button>
+                    <button className="btn sm ghost" onClick={() => openNotice(u)}>Aviso exclusivo</button>
                     <button className="btn sm" onClick={() => openEdit(u)}>Editar</button>
                     {!u.is_super && <button className="btn sm danger" onClick={() => remove(u.id)}>Excluir</button>}
                   </>
@@ -232,7 +232,7 @@ export default function AdminUsers() {
           <div className="modal glass glass-strong small" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setNoticeUser(null)}>×</button>
             <div className="subtitle">Aviso</div>
-            <h2 style={{ marginBottom: 16 }}>Enviar aviso</h2>
+            <h2 style={{ marginBottom: 16 }}>Enviar aviso exclusivo</h2>
             <p className="hint" style={{ marginBottom: 14 }}>
               Destino: <strong>{noticeUser.name}</strong>
             </p>

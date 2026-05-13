@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { api, clearSession, getProfile } from '../api';
 
 function fmtDate(iso) {
@@ -8,15 +8,16 @@ function fmtDate(iso) {
 }
 
 export default function UserCatalog({ anonymous = false }) {
-  const loc = useLocation();
   const nav = useNavigate();
-  const isAnonymous = anonymous || loc.pathname === '/semlogin';
+  const isAnonymous = anonymous;
   const profile = isAnonymous ? null : getProfile();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [topReaders, setTopReaders] = useState([]);
   const [search, setSearch] = useState('');
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [suggestion, setSuggestion] = useState({ title: 'Sugestão', message: '', sent: false, error: '' });
 
   async function load() {
     try {
@@ -51,6 +52,17 @@ export default function UserCatalog({ anonymous = false }) {
     nav('/');
   }
 
+  async function sendSuggestion(event) {
+    event.preventDefault();
+    setSuggestion(current => ({ ...current, error: '' }));
+    try {
+      await api.post('/suggestions', { title: suggestion.title, message: suggestion.message });
+      setSuggestion({ title: 'Sugestão', message: '', sent: true, error: '' });
+    } catch (error) {
+      setSuggestion(current => ({ ...current, error: error.message }));
+    }
+  }
+
   return (
     <div className="container">
       <div className="subtitle">Acervo</div>
@@ -62,13 +74,10 @@ export default function UserCatalog({ anonymous = false }) {
       {profile && (
         <div className="reader-session glass">
           <span>{profile.name}</span>
-          <button className="btn sm ghost" onClick={logout}>Sair</button>
-        </div>
-      )}
-      {isAnonymous && (
-        <div className="reader-session glass">
-          <span>Acesso sem login</span>
-          <Link className="btn sm ghost" to="/">Entrar</Link>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn sm ghost" onClick={() => { setSuggestionOpen(true); setSuggestion({ title: 'Sugestão', message: '', sent: false, error: '' }); }}>Sugestões</button>
+            <button className="btn sm ghost" onClick={logout}>Sair</button>
+          </div>
         </div>
       )}
 
@@ -143,6 +152,58 @@ export default function UserCatalog({ anonymous = false }) {
       ))}
 
       {selected && <BookModal book={selected} profile={profile} anonymous={isAnonymous} onClose={() => setSelected(null)} onUpdate={load} />}
+
+      {suggestionOpen && (
+        <div className="modal-backdrop" onClick={() => setSuggestionOpen(false)}>
+          <div className="modal glass glass-strong small" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSuggestionOpen(false)}>×</button>
+            <div className="subtitle">Biblioteca</div>
+            <h2 style={{ marginBottom: 16 }}>Sugestões</h2>
+            {suggestion.sent ? (
+              <>
+                <div className="success-msg">Sugestão enviada.</div>
+                <button className="btn accent block" onClick={() => setSuggestionOpen(false)}>Fechar</button>
+              </>
+            ) : (
+              <form onSubmit={sendSuggestion}>
+                {suggestion.error && <div className="error-msg">{suggestion.error}</div>}
+                <div className="field">
+                  <label>Título</label>
+                  <input className="input" value={suggestion.title}
+                         onChange={e => setSuggestion({ ...suggestion, title: e.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Explique sua sugestão</label>
+                  <textarea className="textarea" autoFocus value={suggestion.message}
+                            onChange={e => setSuggestion({ ...suggestion, message: e.target.value })}
+                            placeholder="Melhorias, livros para comprar, ideias..." />
+                </div>
+                <button className="btn accent block" disabled={!suggestion.message.trim()}>Enviar</button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stars({ value = 0, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange?.(star)}
+          style={{ background: 'transparent', border: 0, padding: 0, cursor: onChange ? 'pointer' : 'default' }}
+          aria-label={`${star} estrelas`}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill={star <= value ? '#f5c25b' : 'none'} stroke={star <= value ? '#f5c25b' : '#fff'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </button>
+      ))}
     </div>
   );
 }
@@ -180,10 +241,16 @@ function BookModal({ book, profile, anonymous, onClose, onUpdate }) {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState({});
+  const [review, setReview] = useState({ rating: 0, text: '' });
   const useLoggedUser = !!profile && !anonymous;
 
   function actionPayload() {
-    return useLoggedUser ? { book_id: book.id } : { book_id: book.id, code };
+    const base = useLoggedUser ? { book_id: book.id } : { book_id: book.id, code };
+    if (review.rating) {
+      base.rating = review.rating;
+      base.review = review.text;
+    }
+    return base;
   }
 
   function openCodeStep(nextStep) {
@@ -260,6 +327,12 @@ function BookModal({ book, profile, anonymous, onClose, onUpdate }) {
               <h2 className="book-detail-title">{book.title}</h2>
               <div className="book-detail-author">{book.author}</div>
               <span className="book-detail-cat">{book.category}</span>
+              {book.rating_count > 0 && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '8px 0' }}>
+                  <Stars value={Math.round(book.rating_avg || 0)} />
+                  <span className="hint">{Number(book.rating_avg || 0).toFixed(1)} · {book.rating_count} avaliação{book.rating_count === 1 ? '' : 'ões'}</span>
+                </div>
+              )}
               <p className="book-detail-synopsis">{book.synopsis || 'Sem sinopse disponível.'}</p>
 
               <div style={{ marginBottom: 12 }}>
@@ -289,12 +362,39 @@ function BookModal({ book, profile, anonymous, onClose, onUpdate }) {
                     <button className="btn ghost" onClick={() => (useLoggedUser ? renew() : openCodeStep('code-renew'))} disabled={loading}>
                       Renovar
                     </button>
-                    <button className="btn ghost" onClick={() => (useLoggedUser ? returnBook() : openCodeStep('code-return'))} disabled={loading}>
+                    <button className="btn ghost" onClick={() => { setReview({ rating: 0, text: '' }); setStep('review-return'); }} disabled={loading}>
                       Devolver
                     </button>
                   </>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'review-return' && (
+          <div>
+            <div className="subtitle">Devolver livro</div>
+            <h2 style={{ marginBottom: 8 }}>Avalie sua leitura</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 18, fontSize: 13 }}>
+              Registre sua avaliação para <strong>{book.title}</strong>.
+            </p>
+            {err && <div className="error-msg">{err}</div>}
+            <div className="field">
+              <label>Nota</label>
+              <Stars value={review.rating} onChange={rating => setReview({ ...review, rating })} />
+            </div>
+            <div className="field">
+              <label>Resumo ou opinião</label>
+              <textarea className="textarea" value={review.text}
+                        onChange={e => setReview({ ...review, text: e.target.value })}
+                        placeholder="O que achou do livro?" />
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+              <button className="btn ghost" onClick={() => setStep('detail')}>Voltar</button>
+              <button className="btn accent" disabled={loading || !review.rating} onClick={returnBook}>
+                {loading ? 'Enviando...' : 'Confirmar devolução'}
+              </button>
             </div>
           </div>
         )}

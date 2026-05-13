@@ -12,6 +12,8 @@ import AdminLoans from './pages/AdminLoans';
 import AdminWaitlist from './pages/AdminWaitlist';
 import AdminReads from './pages/AdminReads';
 import AdminSettings from './pages/AdminSettings';
+import AdminSuggestions from './pages/AdminSuggestions';
+import AdminReviews from './pages/AdminReviews';
 import NotificationBell from './components/NotificationBell';
 
 const SECRET_THEME_STORAGE_KEY = 'biblio.secretTheme.v1';
@@ -193,6 +195,8 @@ function Navbar({ variant, onSecretTitleClick }) {
           <Link onClick={closeAdminMenu} to="/admin/emprestimos" className={`nav-link ${loc.pathname === '/admin/emprestimos' ? 'active' : ''}`}>Empréstimos</Link>
           <Link onClick={closeAdminMenu} to="/admin/fila" className={`nav-link ${loc.pathname === '/admin/fila' ? 'active' : ''}`}>Fila</Link>
           <Link onClick={closeAdminMenu} to="/admin/leituras" className={`nav-link ${loc.pathname === '/admin/leituras' ? 'active' : ''}`}>Leituras</Link>
+          <Link onClick={closeAdminMenu} to="/admin/sugestoes" className={`nav-link ${loc.pathname === '/admin/sugestoes' ? 'active' : ''}`}>Sugestões</Link>
+          <Link onClick={closeAdminMenu} to="/admin/avaliacoes" className={`nav-link ${loc.pathname === '/admin/avaliacoes' ? 'active' : ''}`}>Avaliações</Link>
           <Link onClick={closeAdminMenu} to="/admin/configuracoes" className={`nav-link ${loc.pathname === '/admin/configuracoes' ? 'active' : ''}`}>Configurações</Link>
           <div className="nav-notifications-desktop">
             <NotificationBell />
@@ -273,6 +277,8 @@ export default function App() {
         <Route path="/admin/emprestimos" element={<AdminGuard><AdminLoans /></AdminGuard>} />
         <Route path="/admin/fila" element={<AdminGuard><AdminWaitlist /></AdminGuard>} />
         <Route path="/admin/leituras" element={<AdminGuard><AdminReads /></AdminGuard>} />
+        <Route path="/admin/sugestoes" element={<AdminGuard><AdminSuggestions /></AdminGuard>} />
+        <Route path="/admin/avaliacoes" element={<AdminGuard><AdminReviews /></AdminGuard>} />
         <Route path="/admin/configuracoes" element={<AdminGuard><AdminSettings /></AdminGuard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
