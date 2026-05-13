@@ -1,10 +1,44 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { api, clearSession, getProfile } from '../api';
+import { api, getProfile } from '../api';
 
 function fmtDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+const readingPhrases = [
+  'Um livro por vez já muda muita coisa.',
+  'Conhecimento pequeno todo dia vira vantagem.',
+  'Leia hoje, use amanhã.',
+  'Boas ideias começam com boas leituras.',
+  'Aprender também é treino.',
+  'Cada página soma repertório.',
+  'Ler melhora decisão.',
+  'Conhecimento aplicado vira resultado.',
+  'Escolha uma leitura e avance.',
+  'Livros encurtam caminhos.',
+  'Leia para pensar melhor.',
+  'Crescimento começa na próxima página.',
+  'Uma boa leitura muda conversas.',
+  'Repertório não nasce sozinho.',
+  'Aprimore uma ideia hoje.',
+  'Seu próximo insight pode estar aqui.',
+  'Leia menos por obrigação, mais por evolução.',
+  'Bons livros puxam boas atitudes.',
+  'Conhecimento é ferramenta de trabalho.',
+  'Escolha algo novo para aprender.'
+];
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Bom dia';
+  if (hour >= 12 && hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function randomItem(list) {
+  return list[Math.floor(Math.random() * list.length)];
 }
 
 export default function UserCatalog({ anonymous = false }) {
@@ -18,6 +52,7 @@ export default function UserCatalog({ anonymous = false }) {
   const [search, setSearch] = useState('');
   const [suggestionOpen, setSuggestionOpen] = useState(false);
   const [suggestion, setSuggestion] = useState({ title: 'Sugestão', message: '', sent: false, error: '' });
+  const [phrase] = useState(() => randomItem(readingPhrases));
 
   async function load() {
     try {
@@ -47,11 +82,6 @@ export default function UserCatalog({ anonymous = false }) {
   if (loading) return <div className="container"><div className="spinner" /></div>;
   if (profile?.force_password_change && !isAnonymous) return <Navigate to="/primeiro-acesso" replace />;
 
-  function logout() {
-    clearSession();
-    nav('/');
-  }
-
   async function sendSuggestion(event) {
     event.preventDefault();
     setSuggestion(current => ({ ...current, error: '' }));
@@ -63,21 +93,23 @@ export default function UserCatalog({ anonymous = false }) {
     }
   }
 
+  function surpriseBook() {
+    const available = books.filter(book => book.status === 'available');
+    const pool = available.length ? available : books;
+    if (pool.length) setSelected(randomItem(pool));
+  }
+
   return (
     <div className="container">
       <div className="subtitle">Acervo</div>
       <h1>Encontre seu próximo livro</h1>
       <p className="hero-sub">
-        {profile ? `Olá, ${profile.name}. Solicitações usam seu cadastro automaticamente.` : 'Navegue pelas categorias e solicite empréstimo com seu código pessoal.'}
+        {profile ? `${greeting()}, ${profile.name}. ${phrase}` : 'Navegue pelas categorias e solicite empréstimo com seu código pessoal.'}
       </p>
 
       {profile && (
         <div className="reader-session glass">
-          <span>{profile.name}</span>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn sm accent" onClick={() => { setSuggestionOpen(true); setSuggestion({ title: 'Sugestão', message: '', sent: false, error: '' }); }}>Enviar sugestão</button>
-            <button className="btn sm ghost" onClick={logout}>Sair</button>
-          </div>
+          <button className="btn sm accent" onClick={() => { setSuggestionOpen(true); setSuggestion({ title: 'Sugestão', message: '', sent: false, error: '' }); }}>Enviar sugestão</button>
         </div>
       )}
 
@@ -124,12 +156,15 @@ export default function UserCatalog({ anonymous = false }) {
       <div className="glass list-card" style={{ marginBottom: 24 }}>
         <div className="field" style={{ margin: 0 }}>
           <label>Buscar no catálogo</label>
-          <input
-            className="input"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Digite título, autor ou categoria"
-          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="input"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Digite título, autor ou categoria"
+            />
+            <button className="btn accent" onClick={surpriseBook}>Me surpreenda</button>
+          </div>
         </div>
       </div>
 
