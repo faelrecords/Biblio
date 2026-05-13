@@ -1,5 +1,38 @@
 export const updates = [
   {
+    version: 'v1.6.3',
+    date: '2026-05-13',
+    title: 'Sessão mais estável',
+    summary: 'Ajuste para manter login ativo ao recarregar a página.',
+    items: [
+      'Sessão persistente corrigida para recarregamentos com F5 e Ctrl+F5.',
+      'Leitura do token de acesso ficou mais robusta.'
+    ]
+  },
+  {
+    version: 'v1.6.2',
+    date: '2026-05-13',
+    title: 'Catálogo mais prático',
+    summary: 'Melhorias na experiência de leitura e descoberta de livros.',
+    items: [
+      'Saudação muda conforme horário: bom dia, boa tarde ou boa noite.',
+      'Frase de incentivo muda a cada acesso.',
+      'Botão Me surpreenda recomenda um livro aleatório.',
+      'Botão Enviar sugestão ficou mais destacado.'
+    ]
+  },
+  {
+    version: 'v1.6.1',
+    date: '2026-05-13',
+    title: 'Ajustes administrativos',
+    summary: 'Melhorias visuais e histórico de mudanças para administradores.',
+    items: [
+      'Nova aba Updates para acompanhar novidades do sistema.',
+      'Categorias em Configurações agora aparecem como etiquetas.',
+      'Cadastro de categoria ficou mais compacto.'
+    ]
+  },
+  {
     version: 'v1.6.0',
     date: '2026-05-13',
     title: 'Sugestões, avaliações e avisos',
