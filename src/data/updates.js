@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.5',
+    date: '2026-05-13',
+    title: 'Gestão de feedback',
+    summary: 'Controle administrativo para limpar registros de feedback.',
+    items: [
+      'Administradores podem excluir sugestões.',
+      'Administradores podem excluir avaliações.'
+    ]
+  },
+  {
     version: 'v1.6.4',
     date: '2026-05-13',
     title: 'Modais mais seguros',

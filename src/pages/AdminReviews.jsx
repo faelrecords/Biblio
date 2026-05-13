@@ -16,9 +16,17 @@ function Stars({ value }) {
 export default function AdminReviews() {
   const [items, setItems] = useState(null);
 
+  const load = () => api.get('/reviews').then(setItems);
+
   useEffect(() => {
-    api.get('/reviews').then(setItems);
+    load();
   }, []);
+
+  async function remove(id) {
+    if (!confirm('Excluir avaliação?')) return;
+    await api.del(`/reviews/${id}`);
+    load();
+  }
 
   if (!items) return <div className="container"><div className="spinner" /></div>;
 
@@ -33,7 +41,7 @@ export default function AdminReviews() {
             <div className="list-cover">
               <img src={item.cover_url || 'https://placehold.co/88x132/1a1a1b/706f70?text=?'} alt="" />
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <div className="list-main-title">{item.book_title}</div>
               <div className="list-main-sub">
                 {item.user_name} · {new Date(item.created_at).toLocaleString('pt-BR')}
@@ -41,6 +49,7 @@ export default function AdminReviews() {
               <div style={{ marginTop: 8 }}><Stars value={item.rating} /></div>
               {item.comment && <p style={{ marginTop: 10, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.comment}</p>}
             </div>
+            <button className="btn sm danger" onClick={() => remove(item.id)}>Excluir</button>
           </div>
         ))}
       </div>

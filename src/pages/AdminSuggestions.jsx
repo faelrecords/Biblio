@@ -4,9 +4,17 @@ import { api } from '../api';
 export default function AdminSuggestions() {
   const [items, setItems] = useState(null);
 
+  const load = () => api.get('/suggestions').then(setItems);
+
   useEffect(() => {
-    api.get('/suggestions').then(setItems);
+    load();
   }, []);
+
+  async function remove(id) {
+    if (!confirm('Excluir sugestão?')) return;
+    await api.del(`/suggestions/${id}`);
+    load();
+  }
 
   if (!items) return <div className="container"><div className="spinner" /></div>;
 
@@ -19,13 +27,14 @@ export default function AdminSuggestions() {
         {items.map(item => (
           <div key={item.id} className="list-row" style={{ alignItems: 'flex-start' }}>
             <div className="avatar">{(item.user_name || '?').charAt(0).toUpperCase()}</div>
-            <div>
+            <div style={{ flex: 1 }}>
               <div className="list-main-title">{item.title || 'Sugestão'}</div>
               <div className="list-main-sub">
                 {item.user_name} · {new Date(item.created_at).toLocaleString('pt-BR')}
               </div>
               <p style={{ marginTop: 10, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.message}</p>
             </div>
+            <button className="btn sm danger" onClick={() => remove(item.id)}>Excluir</button>
           </div>
         ))}
       </div>
