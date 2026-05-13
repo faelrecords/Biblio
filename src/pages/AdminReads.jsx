@@ -182,7 +182,7 @@ export default function AdminReads() {
       )}
 
       {editing && (
-        <div className="modal-backdrop" onClick={() => setEditing(null)}>
+        <div className="modal-backdrop">
           <div className="modal glass glass-strong" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
             <button className="modal-close" onClick={() => setEditing(null)}>×</button>
             <div className="subtitle">Registro</div>

@@ -189,7 +189,7 @@ export default function UserCatalog({ anonymous = false }) {
       {selected && <BookModal book={selected} profile={profile} anonymous={isAnonymous} onClose={() => setSelected(null)} onUpdate={load} />}
 
       {suggestionOpen && (
-        <div className="modal-backdrop" onClick={() => setSuggestionOpen(false)}>
+        <div className="modal-backdrop">
           <div className="modal glass glass-strong small" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setSuggestionOpen(false)}>×</button>
             <div className="subtitle">Biblioteca</div>
@@ -347,7 +347,7 @@ function BookModal({ book, profile, anonymous, onClose, onUpdate }) {
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal glass glass-strong" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>×</button>
 

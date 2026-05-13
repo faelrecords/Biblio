@@ -35,7 +35,7 @@ export default function ApprovalModal({ loan, book, selfApprove, currentUser, us
   const dueDate = new Date(Date.now() + days * 86400000).toLocaleDateString('pt-BR');
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal small glass glass-strong" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>×</button>
         <div className="subtitle" style={{ textAlign: 'center' }}>

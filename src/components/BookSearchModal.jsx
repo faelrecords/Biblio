@@ -31,7 +31,7 @@ export default function BookSearchModal({ initialQuery = '', onPick, onClose }) 
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal glass glass-strong" onClick={e => e.stopPropagation()}
            style={{ maxWidth: 920, width: '100%' }}>
         <button className="modal-close" onClick={onClose}>×</button>

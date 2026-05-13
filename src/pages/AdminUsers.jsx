@@ -141,7 +141,7 @@ export default function AdminUsers() {
       </div>
 
       {editing && (
-        <div className="modal-backdrop" onClick={() => setEditing(null)}>
+        <div className="modal-backdrop">
           <div className="modal glass glass-strong" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <button className="modal-close" onClick={() => setEditing(null)}>×</button>
             <div className="subtitle">{editing === 'new' ? 'Cadastro' : 'Edição'}</div>
@@ -212,7 +212,7 @@ export default function AdminUsers() {
       )}
 
       {showCreated && (
-        <div className="modal-backdrop" onClick={() => setShowCreated(null)}>
+        <div className="modal-backdrop">
           <div className="modal glass glass-strong small" onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
             <button className="modal-close" onClick={() => setShowCreated(null)}>×</button>
             <div style={{ fontSize: 40, marginBottom: 4, color: 'var(--accent-text)' }}>✓</div>
@@ -228,7 +228,7 @@ export default function AdminUsers() {
       )}
 
       {noticeUser && (
-        <div className="modal-backdrop" onClick={() => setNoticeUser(null)}>
+        <div className="modal-backdrop">
           <div className="modal glass glass-strong small" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setNoticeUser(null)}>×</button>
             <div className="subtitle">Aviso</div>

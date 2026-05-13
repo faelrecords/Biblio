@@ -131,7 +131,7 @@ function applyThemeVariables(vars) {
 
 function SecretPopup({ onClose }) {
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal small glass glass-strong" onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
         <button className="modal-close" onClick={onClose}>×</button>
         <div className="subtitle" style={{ textAlign: 'center' }}>Easter egg</div>

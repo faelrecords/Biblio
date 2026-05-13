@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.4',
+    date: '2026-05-13',
+    title: 'Modais mais seguros',
+    summary: 'Ajuste para evitar fechamento acidental de janelas.',
+    items: [
+      'Cliques fora dos modais nao fecham mais a janela.',
+      'Fechamento continua pelos botoes proprios.'
+    ]
+  },
+  {
     version: 'v1.6.3',
     date: '2026-05-13',
     title: 'Sessão mais estável',

@@ -123,7 +123,7 @@ export default function AdminBooks() {
       </div>
 
       {editing && (
-        <div className="modal-backdrop" onClick={() => setEditing(null)}>
+        <div className="modal-backdrop">
           <div className="modal glass glass-strong" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setEditing(null)}>×</button>
             <div className="subtitle">{editing === 'new' ? 'Cadastro' : 'Edição'}</div>
