@@ -7,15 +7,26 @@ export default function Login() {
   const [pass, setPass] = useState('');
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [superSession, setSuperSession] = useState(null);
   const nav = useNavigate();
+
+  function enterAs(path) {
+    if (!superSession) return;
+    setSession(superSession.token, superSession.user);
+    nav(path);
+  }
 
   async function submit(e) {
     e.preventDefault();
     setErr(''); setLoading(true);
     try {
       const r = await api.post('/auth/admin', { identifier, password: pass });
-      setSession(r.token, r.user);
-      nav('/admin');
+      if (r.user?.is_super) {
+        setSuperSession(r);
+      } else {
+        setSession(r.token, r.user);
+        nav('/admin');
+      }
     } catch (e) { setErr(e.message); }
     finally { setLoading(false); }
   }
@@ -29,6 +40,17 @@ export default function Login() {
 
         {err && <div className="error-msg">{err}</div>}
 
+        {superSession ? (
+          <div>
+            <div className="success-msg">Escolha modo de entrada.</div>
+            <button className="btn accent block" onClick={() => enterAs('/admin')} style={{ marginTop: 12, padding: '12px' }}>
+              Entrar como admin
+            </button>
+            <button className="btn ghost block" onClick={() => enterAs('/catalogo')} style={{ marginTop: 10, padding: '12px' }}>
+              Entrar como leitor
+            </button>
+          </div>
+        ) : (
         <form onSubmit={submit}>
           <div className="field">
             <label>Nome ou código</label>
@@ -44,6 +66,7 @@ export default function Login() {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+        )}
 
         <div className="auth-back">
           <Link to="/">← voltar</Link>

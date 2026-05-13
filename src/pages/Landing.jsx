@@ -8,6 +8,13 @@ export default function Landing({ onSecretTitleClick }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [superSession, setSuperSession] = useState(null);
+
+  function enterAs(path) {
+    if (!superSession) return;
+    setSession(superSession.token, superSession.user);
+    nav(path);
+  }
 
   async function login(event) {
     event.preventDefault();
@@ -18,7 +25,12 @@ export default function Landing({ onSecretTitleClick }) {
         identifier: identifier.trim(),
         password
       });
-      setSession(result.token, result.user);
+      if (result.user?.is_super && !result.user?.force_password_change) {
+        setSuperSession(result);
+      } else {
+        setSession(result.token, result.user);
+      }
+      if (result.user?.is_super && !result.user?.force_password_change) return;
       if (result.user?.force_password_change) nav('/primeiro-acesso');
       else if (result.user?.is_admin) nav('/admin');
       else nav('/catalogo');
@@ -39,6 +51,15 @@ export default function Landing({ onSecretTitleClick }) {
         <h1 className="landing-logo" onClick={onSecretTitleClick}>Biblio</h1>
         <p className="landing-subtitle">desenvolvido por @fael.records</p>
 
+        {superSession ? (
+          <div>
+            <div className="success-msg">Escolha modo de entrada.</div>
+            <div className="landing-actions">
+              <button className="btn accent block" onClick={() => enterAs('/admin')}>Entrar como admin</button>
+              <button className="btn ghost block" onClick={() => enterAs('/catalogo')}>Entrar como leitor</button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={login}>
           {err && <div className="error-msg">{err}</div>}
           <div className="field">
@@ -68,6 +89,7 @@ export default function Landing({ onSecretTitleClick }) {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
