@@ -16,6 +16,7 @@ export default function UserCatalog({ anonymous = false }) {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [topReaders, setTopReaders] = useState([]);
+  const [search, setSearch] = useState('');
 
   async function load() {
     try {
@@ -29,7 +30,14 @@ export default function UserCatalog({ anonymous = false }) {
   }
   useEffect(() => { load(); }, []);
 
-  const byCategory = books.reduce((acc, b) => {
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredBooks = normalizedSearch
+    ? books.filter(b =>
+        `${b.title || ''} ${b.author || ''} ${b.category || ''}`.toLowerCase().includes(normalizedSearch)
+      )
+    : books;
+
+  const byCategory = filteredBooks.reduce((acc, b) => {
     const k = b.category || 'Geral';
     (acc[k] = acc[k] || []).push(b);
     return acc;
@@ -104,8 +112,20 @@ export default function UserCatalog({ anonymous = false }) {
         </div>
       )}
 
+      <div className="glass list-card" style={{ marginBottom: 24 }}>
+        <div className="field" style={{ margin: 0 }}>
+          <label>Buscar no catálogo</label>
+          <input
+            className="input"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Digite título, autor ou categoria"
+          />
+        </div>
+      </div>
+
       {Object.keys(byCategory).length === 0 && (
-        <div className="glass list-card"><div className="empty-state">Nenhum livro cadastrado ainda.</div></div>
+        <div className="glass list-card"><div className="empty-state">{search ? 'Nenhum livro encontrado.' : 'Nenhum livro cadastrado ainda.'}</div></div>
       )}
 
       {Object.entries(byCategory).map(([cat, items]) => (

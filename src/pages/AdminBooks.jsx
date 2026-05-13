@@ -15,6 +15,7 @@ const empty = {
 export default function AdminBooks() {
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);
@@ -24,8 +25,8 @@ export default function AdminBooks() {
   const me = getProfile();
 
   async function load() {
-    const [b, u] = await Promise.all([api.get('/books'), api.get('/users')]);
-    setBooks(b); setUsers(u);
+    const [b, u, c] = await Promise.all([api.get('/books'), api.get('/users'), api.get('/categories')]);
+    setBooks(b); setUsers(u); setCategories(c || []);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -64,6 +65,13 @@ export default function AdminBooks() {
     if (editing === 'new') await api.post('/books', payload);
     else await api.put(`/books/${editing}`, payload);
     setEditing(null); load();
+  }
+
+  async function addSuggestedCategory() {
+    const name = form.category.trim();
+    if (!name) return;
+    await api.post('/categories', { name });
+    setCategories(current => [...new Set([...current, name])].sort((a, b) => a.localeCompare(b)));
   }
 
   async function remove(id) {
@@ -142,7 +150,16 @@ export default function AdminBooks() {
               </div>
               <div className="field">
                 <label>Categoria</label>
-                <input className="input" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
+                <select className="input" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                  <option value="">Selecione</option>
+                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  {form.category && !categories.includes(form.category) && <option value={form.category}>{form.category}</option>}
+                </select>
+                {form.category && !categories.includes(form.category) && (
+                  <button type="button" className="btn sm ghost" style={{ marginTop: 8 }} onClick={addSuggestedCategory}>
+                    Criar categoria sugerida: {form.category}
+                  </button>
+                )}
               </div>
             </div>
             <div className="grid-2">
