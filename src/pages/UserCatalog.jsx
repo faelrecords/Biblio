@@ -75,7 +75,7 @@ export default function UserCatalog({ anonymous = false }) {
         <div className="reader-session glass">
           <span>{profile.name}</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn sm ghost" onClick={() => { setSuggestionOpen(true); setSuggestion({ title: 'Sugestão', message: '', sent: false, error: '' }); }}>Sugestões</button>
+            <button className="btn sm accent" onClick={() => { setSuggestionOpen(true); setSuggestion({ title: 'Sugestão', message: '', sent: false, error: '' }); }}>Enviar sugestão</button>
             <button className="btn sm ghost" onClick={logout}>Sair</button>
           </div>
         </div>

@@ -14,6 +14,7 @@ import AdminReads from './pages/AdminReads';
 import AdminSettings from './pages/AdminSettings';
 import AdminSuggestions from './pages/AdminSuggestions';
 import AdminReviews from './pages/AdminReviews';
+import AdminUpdates from './pages/AdminUpdates';
 import NotificationBell from './components/NotificationBell';
 
 const SECRET_THEME_STORAGE_KEY = 'biblio.secretTheme.v1';
@@ -198,6 +199,7 @@ function Navbar({ variant, onSecretTitleClick }) {
           <Link onClick={closeAdminMenu} to="/admin/sugestoes" className={`nav-link ${loc.pathname === '/admin/sugestoes' ? 'active' : ''}`}>Sugestões</Link>
           <Link onClick={closeAdminMenu} to="/admin/avaliacoes" className={`nav-link ${loc.pathname === '/admin/avaliacoes' ? 'active' : ''}`}>Avaliações</Link>
           <Link onClick={closeAdminMenu} to="/admin/configuracoes" className={`nav-link ${loc.pathname === '/admin/configuracoes' ? 'active' : ''}`}>Configurações</Link>
+          <Link onClick={closeAdminMenu} to="/admin/updates" className={`nav-link ${loc.pathname === '/admin/updates' ? 'active' : ''}`}>Updates</Link>
           <div className="nav-notifications-desktop">
             <NotificationBell />
           </div>
@@ -280,6 +282,7 @@ export default function App() {
         <Route path="/admin/sugestoes" element={<AdminGuard><AdminSuggestions /></AdminGuard>} />
         <Route path="/admin/avaliacoes" element={<AdminGuard><AdminReviews /></AdminGuard>} />
         <Route path="/admin/configuracoes" element={<AdminGuard><AdminSettings /></AdminGuard>} />
+        <Route path="/admin/updates" element={<AdminGuard><AdminUpdates /></AdminGuard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {secretOpen && (
