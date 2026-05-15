@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.6',
+    date: '2026-05-15',
+    title: 'Menu administrativo',
+    summary: 'Ajuste no menu do painel em computadores.',
+    items: [
+      'Novo toggle para esconder ou mostrar abas do menu admin.',
+      'Preferência fica salva no navegador.'
+    ]
+  },
+  {
     version: 'v1.6.5',
     date: '2026-05-13',
     title: 'Gestão de feedback',

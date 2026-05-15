@@ -18,6 +18,7 @@ import AdminUpdates from './pages/AdminUpdates';
 import NotificationBell from './components/NotificationBell';
 
 const SECRET_THEME_STORAGE_KEY = 'biblio.secretTheme.v1';
+const ADMIN_NAV_COLLAPSED_KEY = 'biblio.adminNavCollapsed.v1';
 const THEME_VARIABLES = [
   '--bg-base',
   '--bg-elevated',
@@ -150,6 +151,7 @@ function Navbar({ variant, onSecretTitleClick }) {
   const nav = useNavigate();
   const loc = useLocation();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [adminNavCollapsed, setAdminNavCollapsed] = useState(() => localStorage.getItem(ADMIN_NAV_COLLAPSED_KEY) === '1');
 
   function logout() { clearSession(); nav('/'); }
   function clickSecretTitle() {
@@ -157,6 +159,13 @@ function Navbar({ variant, onSecretTitleClick }) {
   }
   function closeAdminMenu() {
     setAdminMenuOpen(false);
+  }
+  function toggleAdminNav() {
+    setAdminNavCollapsed(value => {
+      const next = !value;
+      localStorage.setItem(ADMIN_NAV_COLLAPSED_KEY, next ? '1' : '0');
+      return next;
+    });
   }
   const brand = (
     <span>Biblio</span>
@@ -173,7 +182,7 @@ function Navbar({ variant, onSecretTitleClick }) {
 
   if (variant === 'admin' && admin) {
     return (
-      <nav className="navbar glass">
+      <nav className={`navbar admin-navbar glass ${adminNavCollapsed ? 'nav-collapsed' : ''}`}>
         <div className="nav-admin-head">
           <button
             type="button"
@@ -188,6 +197,16 @@ function Navbar({ variant, onSecretTitleClick }) {
             <NotificationBell />
           </div>
         </div>
+        <button
+          type="button"
+          className={`nav-tabs-switch ${adminNavCollapsed ? '' : 'on'}`}
+          onClick={toggleAdminNav}
+          aria-pressed={!adminNavCollapsed}
+          title={adminNavCollapsed ? 'Mostrar abas' : 'Esconder abas'}
+        >
+          <span />
+          Abas
+        </button>
         <div className={`nav-links admin-nav-links ${adminMenuOpen ? 'open' : ''}`}>
           <Link onClick={closeAdminMenu} to="/admin" className={`nav-link ${loc.pathname === '/admin' ? 'active' : ''}`}>Painel</Link>
           <Link onClick={closeAdminMenu} to="/admin/biblioteca" className={`nav-link ${loc.pathname === '/admin/biblioteca' ? 'active' : ''}`}>Biblioteca</Link>
