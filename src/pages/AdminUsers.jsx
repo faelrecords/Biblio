@@ -15,6 +15,7 @@ export default function AdminUsers() {
   const [notice, setNotice] = useState({ title: 'Aviso da biblioteca', message: '' });
   const [noticeErr, setNoticeErr] = useState('');
   const [noticeLoading, setNoticeLoading] = useState(false);
+  const [query, setQuery] = useState('');
   const me = getProfile();
 
   async function load() {
@@ -91,6 +92,13 @@ export default function AdminUsers() {
     ? (form.is_admin ? 'Senha do admin' : 'Senha temporária')
     : (form.is_admin ? 'Nova senha (em branco mantém)' : 'Nova senha temporária (em branco mantém)');
   const saveDisabled = !form.name || (editing === 'new' && form.password.length < 4);
+  const visibleUsers = users.filter(user => {
+    const text = `${user.name} ${user.email || ''}`.toLowerCase();
+    return text.includes(query.trim().toLowerCase());
+  });
+  const lastSeenText = user => user.last_seen_at
+    ? new Date(user.last_seen_at).toLocaleString('pt-BR')
+    : 'nunca online';
 
   if (loading) return <div className="container"><div className="spinner" /></div>;
 
@@ -104,9 +112,19 @@ export default function AdminUsers() {
         <button className="btn accent" onClick={openNew}>+ Novo usuário</button>
       </div>
 
+      <div className="toolbar" style={{ marginTop: 18 }}>
+        <input
+          className="input"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Pesquisar usuário..."
+          style={{ maxWidth: 420 }}
+        />
+      </div>
+
       <div className="glass list-card">
-        {users.length === 0 && <div className="empty-state">Nenhum usuário cadastrado.</div>}
-        {users.map(u => {
+        {visibleUsers.length === 0 && <div className="empty-state">Nenhum usuário encontrado.</div>}
+        {visibleUsers.map(u => {
           const protectedUser = u.is_super && me?.id !== u.id;
           return (
             <div key={u.id} className="list-row">
@@ -120,6 +138,9 @@ export default function AdminUsers() {
                 </div>
                 <div className="list-main-sub">
                   {u.email || 'sem email'} · <strong style={{ color: 'var(--text-secondary)' }}>{u.books_read || 0}</strong> livros lidos
+                </div>
+                <div className="list-main-sub">
+                  Último online: {lastSeenText(u)}
                 </div>
               </div>
               <div className="actions">

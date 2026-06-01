@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.7',
+    date: '2026-06-01',
+    title: 'Usuários mais rastreáveis',
+    summary: 'Melhorias na administração de usuários.',
+    items: [
+      'Aba Usuários mostra última vez online.',
+      'Aba Usuários ganhou busca por nome ou email.'
+    ]
+  },
+  {
     version: 'v1.6.6',
     date: '2026-05-15',
     title: 'Menu administrativo',
