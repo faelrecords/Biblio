@@ -110,6 +110,10 @@ export default function AdminUsers() {
   };
   const isOnline = user => user.last_seen_at
     && Date.now() - new Date(user.last_seen_at).getTime() <= 5 * 60 * 1000;
+  const onlineText = user => {
+    const minutes = Math.max(1, Math.floor((Date.now() - new Date(user.last_seen_at).getTime()) / 60000));
+    return `online há ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
+  };
 
   if (loading) return <div className="container"><div className="spinner" /></div>;
 
@@ -146,7 +150,7 @@ export default function AdminUsers() {
                   {u.is_super && <span className="badge approved" style={{ marginLeft: 8 }}>super admin</span>}
                   {!u.is_super && u.is_admin && <span className="badge approved" style={{ marginLeft: 8 }}>admin</span>}
                   {u.force_password_change && <span className="badge pending" style={{ marginLeft: 8 }}>primeiro acesso</span>}
-                  {isOnline(u) && <span className="badge approved" style={{ marginLeft: 8 }}>online agora</span>}
+                  {isOnline(u) && <span className="badge approved" style={{ marginLeft: 8 }}>{onlineText(u)}</span>}
                 </div>
                 <div className="list-main-sub">
                   {u.email || 'sem email'} · <strong style={{ color: 'var(--text-secondary)' }}>{u.books_read || 0}</strong> livros lidos

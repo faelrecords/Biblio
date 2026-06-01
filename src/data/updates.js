@@ -1,5 +1,14 @@
 export const updates = [
   {
+    version: 'v1.6.10',
+    date: '2026-06-01',
+    title: 'Texto de presença',
+    summary: 'Ajuste fino no status online de usuários.',
+    items: [
+      'Status online agora mostra quantos minutos se passaram.'
+    ]
+  },
+  {
     version: 'v1.6.9',
     date: '2026-06-01',
     title: 'Presença de usuários',
