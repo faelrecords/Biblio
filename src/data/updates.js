@@ -1,5 +1,14 @@
 export const updates = [
   {
+    version: 'v1.6.8',
+    date: '2026-06-01',
+    title: 'Status online',
+    summary: 'Melhoria visual na aba Usuários.',
+    items: [
+      'Usuários ativos nos últimos 5 minutos aparecem como online agora.'
+    ]
+  },
+  {
     version: 'v1.6.7',
     date: '2026-06-01',
     title: 'Usuários mais rastreáveis',
