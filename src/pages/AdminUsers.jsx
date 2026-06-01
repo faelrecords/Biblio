@@ -96,9 +96,18 @@ export default function AdminUsers() {
     const text = `${user.name} ${user.email || ''}`.toLowerCase();
     return text.includes(query.trim().toLowerCase());
   });
-  const lastSeenText = user => user.last_seen_at
-    ? new Date(user.last_seen_at).toLocaleString('pt-BR')
-    : 'nunca online';
+  const lastSeenText = user => {
+    if (!user.last_seen_at) return 'nunca online';
+    const last = new Date(user.last_seen_at);
+    const diffMs = Date.now() - last.getTime();
+    const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+    if (diffMinutes < 60) return `há ${diffMinutes || 1} min`;
+    if (diffMinutes < 1440) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `há ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+    }
+    return last.toLocaleString('pt-BR');
+  };
   const isOnline = user => user.last_seen_at
     && Date.now() - new Date(user.last_seen_at).getTime() <= 5 * 60 * 1000;
 

@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.9',
+    date: '2026-06-01',
+    title: 'Presença de usuários',
+    summary: 'Ajuste na exibição da última atividade.',
+    items: [
+      'Último online mostra minutos ou horas nas primeiras 24 horas.',
+      'Após 24 horas, exibe data e hora completas.'
+    ]
+  },
+  {
     version: 'v1.6.8',
     date: '2026-06-01',
     title: 'Status online',
