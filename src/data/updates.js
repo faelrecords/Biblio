@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.21',
+    date: '2026-07-30',
+    title: 'Dias com concordância correta',
+    summary: 'A variável de prazo agora retorna uma expressão completa.',
+    items: [
+      'A variável {dias} exibe “1 dia” no singular e “N dias” nos demais casos.',
+      'Mensagens antigas com “{dias} dia(s)” são corrigidas automaticamente para evitar repetição.'
+    ]
+  },
+  {
     version: 'v1.6.20',
     date: '2026-07-30',
     title: 'Identificação obrigatória do remetente',

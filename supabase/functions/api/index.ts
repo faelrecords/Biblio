@@ -431,7 +431,7 @@ const AUTOMATION_DEFAULTS = [
     days_before: 1,
     title: APP_NOTIFICATION_TITLE,
     sender_name: 'Sistema',
-    message: 'Olá, {usuario}. O empréstimo de {livro} expira em {dias} dia(s), em {data_devolucao}.'
+    message: 'Olá, {usuario}. O empréstimo de {livro} expira em {dias}, em {data_devolucao}.'
   },
   {
     key: 'builtin:waitlist_release',
@@ -526,8 +526,15 @@ function formatAutomationDate(value: unknown) {
   return new Date(String(value)).toLocaleString('pt-BR');
 }
 
+function formatDays(value: unknown) {
+  const days = Number(value);
+  if (!Number.isFinite(days)) return '';
+  return `${days} ${Math.abs(days) === 1 ? 'dia' : 'dias'}`;
+}
+
 function renderAutomationText(template: string, values: Record<string, unknown>) {
-  return template.replace(/\{([a-z_]+)\}/gi, (_match, key) => String(values[key] ?? ''));
+  const normalizedTemplate = template.replace(/\{dias\}\s+(?:dia\(s\)|dias?)/gi, '{dias}');
+  return normalizedTemplate.replace(/\{([a-z_]+)\}/gi, (_match, key) => String(values[key] ?? ''));
 }
 
 async function automationAlreadySent(automationId: number, context: Record<string, any>) {
@@ -550,7 +557,7 @@ async function dispatchAutomation(automation: Record<string, any>, context: Reco
   const values = {
     usuario: context.user.name || 'usuário',
     livro: context.book.title || 'Livro',
-    dias: context.days ?? '',
+    dias: formatDays(context.days),
     data_devolucao: formatAutomationDate(context.loan?.due_at),
     data_limite: formatAutomationDate(context.hold_until)
   };
@@ -1688,7 +1695,7 @@ async function handle(req: Request) {
       const days = loan.due_at
         ? Math.ceil((new Date(loan.due_at).getTime() - Date.now()) / 86400000)
         : 0;
-      return `${bookTitles.get(loan.book_id) || 'Livro'} — devolução: ${formatAutomationDate(loan.due_at)} — ${days} dia(s) restante(s)`;
+      return `${bookTitles.get(loan.book_id) || 'Livro'} — devolução: ${formatAutomationDate(loan.due_at)} — ${formatDays(days)} ${Math.abs(days) === 1 ? 'restante' : 'restantes'}`;
     }).join('\n') || 'Nenhum empréstimo ativo.';
     const firstLoan = activeLoans?.[0];
     const variables = {
@@ -1697,7 +1704,7 @@ async function handle(req: Request) {
       emprestimo: loanDetails,
       livro: firstLoan ? bookTitles.get(firstLoan.book_id) || 'Livro' : '',
       dias: firstLoan?.due_at
-        ? Math.ceil((new Date(firstLoan.due_at).getTime() - Date.now()) / 86400000)
+        ? formatDays(Math.ceil((new Date(firstLoan.due_at).getTime() - Date.now()) / 86400000))
         : '',
       data_devolucao: formatAutomationDate(firstLoan?.due_at)
     };
