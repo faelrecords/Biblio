@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.11',
+    date: '2026-07-30',
+    title: 'Reajuste de prazo',
+    summary: 'Mais controle sobre os empréstimos ativos.',
+    items: [
+      'Administradores podem reajustar os dias de empréstimo de um livro.',
+      'O novo prazo pode ser definido entre 1 e 90 dias.'
+    ]
+  },
+  {
     version: 'v1.6.10',
     date: '2026-06-01',
     title: 'Texto de presença',
