@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.18',
+    date: '2026-07-30',
+    title: 'Cabeçalho padrão das notificações',
+    summary: 'Avisos no Bitrix24 agora recebem um cabeçalho destacado e fixo.',
+    items: [
+      'Todas as mensagens enviadas ao Bitrix24 usam o cabeçalho vermelho e em negrito “Aviso da Biblioteca”.',
+      'Os avisos gerais e exclusivos não permitem mais alterar o título.',
+      'As automações agora exibem somente o campo Mensagem, com título definido automaticamente.'
+    ]
+  },
+  {
     version: 'v1.6.17',
     date: '2026-07-30',
     title: 'Variáveis individuais restauradas',

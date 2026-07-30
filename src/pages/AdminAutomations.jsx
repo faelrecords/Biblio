@@ -146,12 +146,7 @@ export default function AdminAutomations() {
               )}
 
               <div className="field">
-                <label>Título da mensagem</label>
-                <input className="input" value={automation.title}
-                       onChange={e => updateLocal(automation.id, { title: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>Mensagem automática</label>
+                <label>Mensagem</label>
                 <textarea className="textarea" value={automation.message}
                           onChange={e => updateLocal(automation.id, { message: e.target.value })} />
                 <div className="hint automation-placeholders">

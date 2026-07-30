@@ -18,7 +18,7 @@ export default function AdminSettings() {
   const [categoryName, setCategoryName] = useState('');
   const [cleanup, setCleanup] = useState({ start: dateInput(90), end: dateInput(0), message: '' });
   const [message, setMessage] = useState('');
-  const [generalNotice, setGeneralNotice] = useState({ title: 'Aviso da biblioteca', message: '', result: '', error: '' });
+  const [generalNotice, setGeneralNotice] = useState({ message: '', result: '', error: '' });
 
   async function load() {
     const [s, c] = await Promise.all([api.get('/settings'), api.get('/categories')]);
@@ -66,10 +66,9 @@ export default function AdminSettings() {
     setGeneralNotice(current => ({ ...current, result: '', error: '' }));
     try {
       const result = await api.post('/notifications/send-all', {
-        title: generalNotice.title,
         message: generalNotice.message
       });
-      setGeneralNotice({ title: 'Aviso da biblioteca', message: '', result: `${result.sent} usuários notificados.`, error: '' });
+      setGeneralNotice({ message: '', result: `${result.sent} usuários notificados.`, error: '' });
     } catch (error) {
       setGeneralNotice(current => ({ ...current, error: error.message }));
     }
@@ -184,12 +183,7 @@ export default function AdminSettings() {
         {generalNotice.error && <div className="error-msg">{generalNotice.error}</div>}
         <form onSubmit={sendGeneralNotice}>
           <div className="field">
-            <label>Título</label>
-            <input className="input" value={generalNotice.title}
-                   onChange={e => setGeneralNotice({ ...generalNotice, title: e.target.value, result: '', error: '' })} />
-          </div>
-          <div className="field">
-            <label>Aviso</label>
+            <label>Mensagem</label>
             <textarea className="textarea" value={generalNotice.message}
                       onChange={e => setGeneralNotice({ ...generalNotice, message: e.target.value, result: '', error: '' })}
                       placeholder="Mensagem para todos os usuários..." />

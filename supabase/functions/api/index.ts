@@ -6,6 +6,8 @@ const JWT_SECRET = Deno.env.get('JWT_SECRET') || '';
 const ADMIN_SETUP_TOKEN = Deno.env.get('ADMIN_SETUP_TOKEN') || '';
 const CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
 const BITRIX24_WEBHOOK_URL = Deno.env.get('BITRIX24_WEBHOOK_URL') || '';
+const APP_NOTIFICATION_TITLE = 'Aviso da Biblioteca';
+const BITRIX_NOTIFICATION_TITLE = '[b][color=#FF0000]Aviso da Biblioteca[/color][/b]';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false }
@@ -396,7 +398,7 @@ async function callBitrix(method: string, params: Record<string, unknown>) {
   return payload?.result;
 }
 
-async function sendBitrixUserNotification(user: Record<string, unknown>, title: string, message: string) {
+async function sendBitrixUserNotification(user: Record<string, unknown>, message: string) {
   const email = String(user.email || '').trim();
   if (!email) throw new Error('usuário sem email para localizar no Bitrix24');
 
@@ -413,7 +415,7 @@ async function sendBitrixUserNotification(user: Record<string, unknown>, title: 
   if (!bitrixUserId) throw new Error('usuário do Bitrix24 sem identificador');
   const messageId = await callBitrix('im.message.add', {
     DIALOG_ID: bitrixUserId,
-    MESSAGE: `${title}\n\n${message}`,
+    MESSAGE: `${BITRIX_NOTIFICATION_TITLE}\n\n${message}`,
     SYSTEM: 'N',
     URL_PREVIEW: 'N'
   });
@@ -427,7 +429,7 @@ const AUTOMATION_DEFAULTS = [
     trigger: 'loan_due_soon',
     enabled: true,
     days_before: 1,
-    title: 'Empréstimo a expirar',
+    title: APP_NOTIFICATION_TITLE,
     message: 'Olá, {usuario}. O empréstimo de {livro} expira em {dias} dia(s), em {data_devolucao}.'
   },
   {
@@ -436,7 +438,7 @@ const AUTOMATION_DEFAULTS = [
     trigger: 'waitlist_release',
     enabled: true,
     days_before: null,
-    title: 'Livro disponível para você',
+    title: APP_NOTIFICATION_TITLE,
     message: 'Olá, {usuario}. {livro} foi devolvido e está reservado para você até {data_limite}.'
   }
 ];
@@ -446,9 +448,8 @@ function cleanAutomation(input: Record<string, unknown>, base: Record<string, un
   const trigger = String(input.trigger || base.trigger || '');
   if (!AUTOMATION_TRIGGERS.has(trigger)) throw new HttpError(400, 'gatilho de automação inválido');
   const name = String(input.name ?? base.name ?? '').trim();
-  const title = String(input.title ?? base.title ?? '').trim();
   const message = String(input.message ?? base.message ?? '').trim();
-  if (!name || !title || !message) throw new HttpError(400, 'nome, título e mensagem são obrigatórios');
+  if (!name || !message) throw new HttpError(400, 'nome e mensagem são obrigatórios');
   const daysBeforeRaw = Number(input.days_before ?? base.days_before ?? 1);
   const daysBefore = trigger === 'loan_due_soon'
     ? Math.min(60, Math.max(1, Math.round(daysBeforeRaw || 1)))
@@ -458,7 +459,7 @@ function cleanAutomation(input: Record<string, unknown>, base: Record<string, un
     trigger,
     enabled: typeof input.enabled === 'boolean' ? input.enabled : base.enabled !== false,
     days_before: daysBefore,
-    title,
+    title: APP_NOTIFICATION_TITLE,
     message
   };
 }
@@ -549,7 +550,7 @@ async function dispatchAutomation(automation: Record<string, any>, context: Reco
     data_devolucao: formatAutomationDate(context.loan?.due_at),
     data_limite: formatAutomationDate(context.hold_until)
   };
-  const title = renderAutomationText(automation.title, values);
+  const title = APP_NOTIFICATION_TITLE;
   const message = renderAutomationText(automation.message, values);
   await createNotification({
     type: `automation_delivery:${automation.id}`,
@@ -563,7 +564,7 @@ async function dispatchAutomation(automation: Record<string, any>, context: Reco
     recipient_user_id: context.user.id
   });
   try {
-    await sendBitrixUserNotification(context.user, title, message);
+    await sendBitrixUserNotification(context.user, message);
   } catch (error) {
     await createNotification({
       type: 'automation_bitrix_failed',
@@ -1693,7 +1694,7 @@ async function handle(req: Request) {
         : '',
       data_devolucao: formatAutomationDate(firstLoan?.due_at)
     };
-    const title = 'Aviso da biblioteca';
+    const title = APP_NOTIFICATION_TITLE;
     const renderedMessage = renderAutomationText(message, variables);
     const notification = await createNotification({
       type: 'admin_message',
@@ -1705,7 +1706,7 @@ async function handle(req: Request) {
     });
     let bitrixDelivery: Record<string, unknown> = { status: 'not_applicable' };
     try {
-      bitrixDelivery = await sendBitrixUserNotification(user, title, renderedMessage);
+      bitrixDelivery = await sendBitrixUserNotification(user, renderedMessage);
     } catch (error) {
       bitrixDelivery = {
         status: 'failed',
@@ -1725,7 +1726,7 @@ async function handle(req: Request) {
     for (const user of users || []) {
       await createNotification({
         type: 'admin_message',
-        title: String(input.title || 'Aviso da biblioteca').trim() || 'Aviso da biblioteca',
+        title: APP_NOTIFICATION_TITLE,
         message,
         user_id: user.id,
         recipient_role: 'user',
