@@ -20,6 +20,25 @@ const typeLabels = {
   self_return: 'Devolução'
 };
 
+function NotificationMessage({ message = '' }) {
+  const prefix = 'Enviado por: ';
+  if (!message.startsWith(prefix)) {
+    return <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4, whiteSpace: 'pre-line' }}>{message}</div>;
+  }
+  const [senderLine, ...bodyParts] = message.split('\n\n');
+  const senderName = senderLine.slice(prefix.length);
+  return (
+    <>
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: 4 }}>
+        <strong style={{ color: '#ff453a' }}>Enviado por:</strong> {senderName}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4, whiteSpace: 'pre-line' }}>
+        {bodyParts.join('\n\n')}
+      </div>
+    </>
+  );
+}
+
 export default function NotificationBell({ reader = false }) {
   const [open, setOpen] = useState(false);
   const [list, setList] = useState([]);
@@ -118,7 +137,7 @@ export default function NotificationBell({ reader = false }) {
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
                 {n.title}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{n.message}</div>
+              <NotificationMessage message={n.message} />
               <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>{fmt(n.created_at)}</div>
             </div>
           ))}

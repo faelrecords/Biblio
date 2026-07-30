@@ -6,7 +6,7 @@ const JWT_SECRET = Deno.env.get('JWT_SECRET') || '';
 const ADMIN_SETUP_TOKEN = Deno.env.get('ADMIN_SETUP_TOKEN') || '';
 const CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
 const BITRIX24_WEBHOOK_URL = Deno.env.get('BITRIX24_WEBHOOK_URL') || '';
-const APP_NOTIFICATION_TITLE = 'Aviso da Biblioteca';
+const APP_NOTIFICATION_TITLE = '⚠️ Aviso da Biblioteca ⚠️';
 const BITRIX_NOTIFICATION_TITLE = '[b][color=#FF0000]⚠️ Aviso da Biblioteca ⚠️[/color][/b]';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -398,7 +398,7 @@ async function callBitrix(method: string, params: Record<string, unknown>) {
   return payload?.result;
 }
 
-async function sendBitrixUserNotification(user: Record<string, unknown>, message: string) {
+async function sendBitrixUserNotification(user: Record<string, unknown>, message: string, senderName: string) {
   const email = String(user.email || '').trim();
   if (!email) throw new Error('usuário sem email para localizar no Bitrix24');
 
@@ -415,7 +415,7 @@ async function sendBitrixUserNotification(user: Record<string, unknown>, message
   if (!bitrixUserId) throw new Error('usuário do Bitrix24 sem identificador');
   const messageId = await callBitrix('im.message.add', {
     DIALOG_ID: bitrixUserId,
-    MESSAGE: `${BITRIX_NOTIFICATION_TITLE}\n\n${message}`,
+    MESSAGE: `${BITRIX_NOTIFICATION_TITLE}\n[color=#FF0000][b]Enviado por:[/b][/color] ${senderName}\n\n${message}`,
     SYSTEM: 'N',
     URL_PREVIEW: 'N'
   });
@@ -430,6 +430,7 @@ const AUTOMATION_DEFAULTS = [
     enabled: true,
     days_before: 1,
     title: APP_NOTIFICATION_TITLE,
+    sender_name: 'Sistema',
     message: 'Olá, {usuario}. O empréstimo de {livro} expira em {dias} dia(s), em {data_devolucao}.'
   },
   {
@@ -439,6 +440,7 @@ const AUTOMATION_DEFAULTS = [
     enabled: true,
     days_before: null,
     title: APP_NOTIFICATION_TITLE,
+    sender_name: 'Sistema',
     message: 'Olá, {usuario}. {livro} foi devolvido e está reservado para você até {data_limite}.'
   }
 ];
@@ -449,6 +451,7 @@ function cleanAutomation(input: Record<string, unknown>, base: Record<string, un
   if (!AUTOMATION_TRIGGERS.has(trigger)) throw new HttpError(400, 'gatilho de automação inválido');
   const name = String(input.name ?? base.name ?? '').trim();
   const message = String(input.message ?? base.message ?? '').trim();
+  const senderName = String(input.sender_name ?? base.sender_name ?? 'Sistema').trim() || 'Sistema';
   if (!name || !message) throw new HttpError(400, 'nome e mensagem são obrigatórios');
   const daysBeforeRaw = Number(input.days_before ?? base.days_before ?? 1);
   const daysBefore = trigger === 'loan_due_soon'
@@ -460,6 +463,7 @@ function cleanAutomation(input: Record<string, unknown>, base: Record<string, un
     enabled: typeof input.enabled === 'boolean' ? input.enabled : base.enabled !== false,
     days_before: daysBefore,
     title: APP_NOTIFICATION_TITLE,
+    sender_name: senderName,
     message
   };
 }
@@ -552,10 +556,12 @@ async function dispatchAutomation(automation: Record<string, any>, context: Reco
   };
   const title = APP_NOTIFICATION_TITLE;
   const message = renderAutomationText(automation.message, values);
+  const senderName = String(automation.sender_name || 'Sistema');
+  const platformMessage = `Enviado por: ${senderName}\n\n${message}`;
   await createNotification({
     type: `automation_delivery:${automation.id}`,
     title,
-    message,
+    message: platformMessage,
     loan_id: context.loan?.id,
     book_id: context.book.id,
     user_id: context.user.id,
@@ -564,7 +570,7 @@ async function dispatchAutomation(automation: Record<string, any>, context: Reco
     recipient_user_id: context.user.id
   });
   try {
-    await sendBitrixUserNotification(context.user, message);
+    await sendBitrixUserNotification(context.user, message, senderName);
   } catch (error) {
     await createNotification({
       type: 'automation_bitrix_failed',
@@ -1054,7 +1060,7 @@ async function handle(req: Request) {
   }
   const automationId = path.match(/^\/automations\/(\d+)$/)?.[1];
   if (automationId && method === 'PUT') {
-    await requireAdmin(req);
+    const auth = await requireAdmin(req);
     const { data: row, error } = await supabase
       .from('notifications')
       .select('*')
@@ -1067,6 +1073,7 @@ async function handle(req: Request) {
     if (!current) throw new HttpError(500, 'automação inválida');
     const input = await body(req);
     if (current.built_in) input.trigger = current.trigger;
+    input.sender_name = String(auth.name || 'Administrador');
     const config = cleanAutomation(input, current);
     const { data, error: updateError } = await supabase
       .from('notifications')
@@ -1657,7 +1664,7 @@ async function handle(req: Request) {
     return json(req, { list: data || [], unread: count || 0 });
   }
   if (method === 'POST' && path === '/notifications/send-user') {
-    await requireAdmin(req);
+    const auth = await requireAdmin(req);
     const input = await body(req);
     const userId = Number(input.user_id);
     const message = String(input.message || '').trim();
@@ -1696,17 +1703,19 @@ async function handle(req: Request) {
     };
     const title = APP_NOTIFICATION_TITLE;
     const renderedMessage = renderAutomationText(message, variables);
+    const senderName = String(auth.name || 'Administrador');
+    const platformMessage = `Enviado por: ${senderName}\n\n${renderedMessage}`;
     const notification = await createNotification({
       type: 'admin_message',
       title,
-      message: renderedMessage,
+      message: platformMessage,
       user_id: userId,
       recipient_role: 'user',
       recipient_user_id: userId
     });
     let bitrixDelivery: Record<string, unknown> = { status: 'not_applicable' };
     try {
-      bitrixDelivery = await sendBitrixUserNotification(user, renderedMessage);
+      bitrixDelivery = await sendBitrixUserNotification(user, renderedMessage, senderName);
     } catch (error) {
       bitrixDelivery = {
         status: 'failed',
@@ -1716,10 +1725,12 @@ async function handle(req: Request) {
     return json(req, { ...notification, bitrix_delivery: bitrixDelivery });
   }
   if (method === 'POST' && path === '/notifications/send-all') {
-    await requireAdmin(req);
+    const auth = await requireAdmin(req);
     const input = await body(req);
     const message = String(input.message || '').trim();
     if (!message) throw new HttpError(400, 'aviso obrigatório');
+    const senderName = String(auth.name || 'Administrador');
+    const platformMessage = `Enviado por: ${senderName}\n\n${message}`;
     const { data: users, error } = await supabase.from('app_users').select('id');
     dbError(error);
     let sent = 0;
@@ -1727,7 +1738,7 @@ async function handle(req: Request) {
       await createNotification({
         type: 'admin_message',
         title: APP_NOTIFICATION_TITLE,
-        message,
+        message: platformMessage,
         user_id: user.id,
         recipient_role: 'user',
         recipient_user_id: user.id

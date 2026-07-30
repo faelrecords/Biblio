@@ -1,5 +1,17 @@
 export const updates = [
   {
+    version: 'v1.6.20',
+    date: '2026-07-30',
+    title: 'Identificação obrigatória do remetente',
+    summary: 'Os avisos agora mostram automaticamente quem realizou o envio.',
+    items: [
+      'A linha “Enviado por” usa o nome do administrador autenticado e não pode ser editada.',
+      'No Bitrix24, “Enviado por:” aparece em negrito e vermelho, seguido do nome normal do administrador.',
+      'Dentro do Biblio, o aviso e a identificação do remetente também são exibidos por padrão.',
+      'Automações usam o administrador que salvou a configuração; enquanto não forem salvas novamente, aparecem como enviadas pelo Sistema.'
+    ]
+  },
+  {
     version: 'v1.6.19',
     date: '2026-07-30',
     title: 'Alerta visual no Bitrix24',
