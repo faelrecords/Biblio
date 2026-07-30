@@ -1049,17 +1049,7 @@ async function handle(req: Request) {
   }
   if (method === 'POST' && path === '/automations') {
     await requireAdmin(req);
-    const config = cleanAutomation(await body(req));
-    const key = `custom:${crypto.randomUUID()}`;
-    const { data, error } = await supabase.from('notifications').insert({
-      type: 'automation_config',
-      title: key,
-      message: JSON.stringify(config),
-      recipient_role: 'user',
-      recipient_user_id: null
-    }).select('*').single();
-    dbError(error);
-    return json(req, automationFromRow(data), 201);
+    throw new HttpError(403, 'novas automações estão temporariamente desabilitadas');
   }
   const automationId = path.match(/^\/automations\/(\d+)$/)?.[1];
   if (automationId && method === 'PUT') {
@@ -1205,11 +1195,30 @@ async function handle(req: Request) {
       .eq('status', 'returned')
       .not('returned_at', 'is', null);
     dbError(readsError);
+    const { data: activeLoans, error: activeLoansError } = await supabase
+      .from('loans')
+      .select('id,user_id,book_id,due_at,days')
+      .eq('status', 'approved')
+      .order('due_at');
+    dbError(activeLoansError);
+    const activeBookIds = [...new Set((activeLoans || []).map(loan => loan.book_id))];
+    const { data: activeBooks, error: activeBooksError } = activeBookIds.length
+      ? await supabase.from('books').select('id,title').in('id', activeBookIds)
+      : { data: [], error: null };
+    dbError(activeBooksError);
+    const activeBookTitles = new Map((activeBooks || []).map(book => [book.id, book.title]));
+    const loansByUser = new Map<number, Record<string, unknown>[]>();
+    for (const loan of activeLoans || []) {
+      const loans = loansByUser.get(loan.user_id) || [];
+      loans.push({ ...loan, book_title: activeBookTitles.get(loan.book_id) || 'Livro' });
+      loansByUser.set(loan.user_id, loans);
+    }
     const counts = new Map<number, number>();
     for (const read of reads || []) counts.set(read.user_id, (counts.get(read.user_id) || 0) + 1);
     return json(req, (data || []).map(user => ({
       ...user,
-      books_read: counts.get(user.id) || 0
+      books_read: counts.get(user.id) || 0,
+      active_loans: loansByUser.get(user.id) || []
     })));
   }
   if (method === 'POST' && path === '/users') {
@@ -1673,18 +1682,41 @@ async function handle(req: Request) {
     if (!userId || !message) throw new HttpError(400, 'usuário e aviso obrigatórios');
     const user = await findUser(userId);
     if (!user) throw new HttpError(404, 'usuário não existe');
-    const title = String(input.title || 'Aviso da biblioteca').trim() || 'Aviso da biblioteca';
+    let selectedLoan: Record<string, any> | null = null;
+    let selectedBook: Record<string, any> | null = null;
+    if (input.loan_id) {
+      selectedLoan = await findLoan(Number(input.loan_id));
+      if (!selectedLoan || selectedLoan.user_id !== userId || selectedLoan.status !== 'approved') {
+        throw new HttpError(400, 'empréstimo selecionado não está ativo para este usuário');
+      }
+      selectedBook = await findBook(selectedLoan.book_id);
+    }
+    const daysRemaining = selectedLoan?.due_at
+      ? Math.ceil((new Date(selectedLoan.due_at).getTime() - Date.now()) / 86400000)
+      : '';
+    const variables = {
+      usuario: user.name || 'usuário',
+      email: user.email || '',
+      livro: selectedBook?.title || '',
+      dias: daysRemaining,
+      data_devolucao: formatAutomationDate(selectedLoan?.due_at)
+    };
+    const titleTemplate = String(input.title || 'Aviso da biblioteca').trim() || 'Aviso da biblioteca';
+    const title = renderAutomationText(titleTemplate, variables);
+    const renderedMessage = renderAutomationText(message, variables);
     const notification = await createNotification({
       type: 'admin_message',
       title,
-      message,
+      message: renderedMessage,
+      loan_id: selectedLoan?.id,
+      book_id: selectedBook?.id,
       user_id: userId,
       recipient_role: 'user',
       recipient_user_id: userId
     });
     let bitrixDelivery: Record<string, unknown> = { status: 'not_applicable' };
     try {
-      bitrixDelivery = await sendBitrixUserNotification(user, title, message);
+      bitrixDelivery = await sendBitrixUserNotification(user, title, renderedMessage);
     } catch (error) {
       bitrixDelivery = {
         status: 'failed',

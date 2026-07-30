@@ -14,21 +14,10 @@ const TRIGGERS = {
   }
 };
 
-const EMPTY_CUSTOM = {
-  name: '',
-  trigger: 'loan_due_soon',
-  enabled: true,
-  days_before: 2,
-  title: 'Lembrete da biblioteca',
-  message: 'Olá, {usuario}. O empréstimo de {livro} expira em {dias} dia(s), em {data_devolucao}.'
-};
-
 export default function AdminAutomations() {
   const [automations, setAutomations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [custom, setCustom] = useState(EMPTY_CUSTOM);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
@@ -66,20 +55,6 @@ export default function AdminAutomations() {
     }
   }
 
-  async function createAutomation(event) {
-    event.preventDefault();
-    setError('');
-    try {
-      const created = await api.post('/automations', custom);
-      setAutomations(current => [...current, created]);
-      setCustom(EMPTY_CUSTOM);
-      setShowCreate(false);
-      setMessage('Automação criada.');
-    } catch (e) {
-      setError(e.message);
-    }
-  }
-
   async function removeAutomation(automation) {
     if (!confirm(`Excluir a automação "${automation.name}"?`)) return;
     try {
@@ -103,66 +78,17 @@ export default function AdminAutomations() {
             Configure mensagens enviadas no Biblio e no chat do Bitrix24.
           </p>
         </div>
-        <button className="btn accent" onClick={() => setShowCreate(value => !value)}>
-          {showCreate ? 'Cancelar' : '+ Nova automação'}
+        <button className="btn accent" disabled title="Temporariamente indisponível">
+          + Nova automação
         </button>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
       {message && <div className="success-msg">{message}</div>}
 
-      {showCreate && (
-        <form className="glass automation-create-card" onSubmit={createAutomation}>
-          <div>
-            <div className="subtitle">Regra personalizada</div>
-            <h2>Nova automação</h2>
-          </div>
-          <div className="grid-2">
-            <div className="field">
-              <label>Nome da automação</label>
-              <input className="input" value={custom.name}
-                     onChange={e => setCustom({ ...custom, name: e.target.value })}
-                     placeholder="Ex.: Segundo lembrete de devolução" />
-            </div>
-            <div className="field">
-              <label>Quando executar</label>
-              <select className="input" value={custom.trigger}
-                      onChange={e => setCustom({ ...custom, trigger: e.target.value })}>
-                {Object.entries(TRIGGERS).map(([value, trigger]) => (
-                  <option key={value} value={value}>{trigger.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          {custom.trigger === 'loan_due_soon' && (
-            <div className="field automation-days-field">
-              <label>Dias antes de expirar</label>
-              <input type="number" min={1} max={60} className="input"
-                     value={custom.days_before}
-                     onChange={e => setCustom({ ...custom, days_before: Number(e.target.value) })} />
-            </div>
-          )}
-          <div className="field">
-            <label>Título da mensagem</label>
-            <input className="input" value={custom.title}
-                   onChange={e => setCustom({ ...custom, title: e.target.value })} />
-          </div>
-          <div className="field">
-            <label>Mensagem</label>
-            <textarea className="textarea" value={custom.message}
-                      onChange={e => setCustom({ ...custom, message: e.target.value })} />
-            <div className="hint automation-placeholders">
-              Campos disponíveis: {TRIGGERS[custom.trigger].placeholders}
-            </div>
-          </div>
-          <div className="automation-form-actions">
-            <button type="button" className="btn ghost" onClick={() => setShowCreate(false)}>Cancelar</button>
-            <button className="btn accent" disabled={!custom.name.trim() || !custom.title.trim() || !custom.message.trim()}>
-              Criar automação
-            </button>
-          </div>
-        </form>
-      )}
+      <div className="hint" style={{ marginBottom: 18 }}>
+        A criação de novas automações está temporariamente desabilitada.
+      </div>
 
       <div className="automation-grid">
         {automations.map(automation => {

@@ -13,6 +13,7 @@ export default function AdminUsers() {
   const [showCreated, setShowCreated] = useState(null);
   const [noticeUser, setNoticeUser] = useState(null);
   const [notice, setNotice] = useState({ title: 'Aviso da biblioteca', message: '' });
+  const [noticeLoanId, setNoticeLoanId] = useState('');
   const [noticeErr, setNoticeErr] = useState('');
   const [noticeResult, setNoticeResult] = useState(null);
   const [noticeLoading, setNoticeLoading] = useState(false);
@@ -69,6 +70,7 @@ export default function AdminUsers() {
   function openNotice(user) {
     setNoticeUser(user);
     setNotice({ title: 'Aviso da biblioteca', message: '' });
+    setNoticeLoanId('');
     setNoticeErr('');
     setNoticeResult(null);
   }
@@ -80,7 +82,8 @@ export default function AdminUsers() {
       const result = await api.post('/notifications/send-user', {
         user_id: noticeUser.id,
         title: notice.title,
-        message: notice.message
+        message: notice.message,
+        loan_id: noticeLoanId || null
       });
       const bitrix = result.bitrix_delivery;
       if (bitrix?.status === 'sent') {
@@ -282,38 +285,75 @@ export default function AdminUsers() {
 
       {noticeUser && (
         <div className="modal-backdrop">
-          <div className="modal glass glass-strong small" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setNoticeUser(null)}>×</button>
-            <div className="subtitle">Aviso</div>
-            <h2 style={{ marginBottom: 16 }}>Enviar aviso exclusivo</h2>
-            <p className="hint" style={{ marginBottom: 14 }}>
-              Destino: <strong>{noticeUser.name}</strong>
-            </p>
-            {noticeErr && <div className="error-msg">{noticeErr}</div>}
-            <div className="field">
-              <label>Título</label>
-              <input
-                className="input"
-                value={notice.title}
-                onChange={e => setNotice({ ...notice, title: e.target.value })}
-              />
+          <div className="notice-modal-layout" onClick={e => e.stopPropagation()}>
+            <div className="modal glass glass-strong small">
+              <button className="modal-close" onClick={() => setNoticeUser(null)}>×</button>
+              <div className="subtitle">Aviso</div>
+              <h2 style={{ marginBottom: 16 }}>Enviar aviso exclusivo</h2>
+              <p className="hint" style={{ marginBottom: 14 }}>
+                Destino: <strong>{noticeUser.name}</strong>
+              </p>
+              {noticeErr && <div className="error-msg">{noticeErr}</div>}
+              <div className="field">
+                <label>Título</label>
+                <input
+                  className="input"
+                  value={notice.title}
+                  onChange={e => setNotice({ ...notice, title: e.target.value })}
+                />
+              </div>
+              <div className="field">
+                <label>Empréstimo para preencher as variáveis (opcional)</label>
+                <select
+                  className="input"
+                  value={noticeLoanId}
+                  onChange={e => setNoticeLoanId(e.target.value)}
+                >
+                  <option value="">Nenhum empréstimo selecionado</option>
+                  {(noticeUser.active_loans || []).map(loan => (
+                    <option key={loan.id} value={loan.id}>
+                      {loan.book_title} — devolução {new Date(loan.due_at).toLocaleDateString('pt-BR')}
+                    </option>
+                  ))}
+                </select>
+                {(noticeUser.active_loans || []).length === 0 && (
+                  <div className="hint">Este usuário não possui empréstimos ativos.</div>
+                )}
+              </div>
+              <div className="field">
+                <label>Aviso</label>
+                <textarea
+                  className="textarea"
+                  autoFocus
+                  value={notice.message}
+                  onChange={e => setNotice({ ...notice, message: e.target.value })}
+                  placeholder="Digite o aviso..."
+                />
+              </div>
+              <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
+                <button className="btn ghost" onClick={() => setNoticeUser(null)}>Cancelar</button>
+                <button className="btn accent" onClick={sendNotice} disabled={noticeLoading || !notice.message.trim()}>
+                  {noticeLoading ? 'Enviando...' : 'Enviar'}
+                </button>
+              </div>
             </div>
-            <div className="field">
-              <label>Aviso</label>
-              <textarea
-                className="textarea"
-                autoFocus
-                value={notice.message}
-                onChange={e => setNotice({ ...notice, message: e.target.value })}
-                placeholder="Digite o aviso..."
-              />
-            </div>
-            <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button className="btn ghost" onClick={() => setNoticeUser(null)}>Cancelar</button>
-              <button className="btn accent" onClick={sendNotice} disabled={noticeLoading || !notice.message.trim()}>
-                {noticeLoading ? 'Enviando...' : 'Enviar'}
-              </button>
-            </div>
+            <aside className="glass glass-strong notice-variable-card">
+              <div className="subtitle">Campos dinâmicos</div>
+              <h2>Variáveis disponíveis</h2>
+              <p className="hint">
+                Use no título ou no aviso. Os campos são substituídos antes do envio ao Biblio e Bitrix24.
+              </p>
+              <dl className="notice-variable-list">
+                <div><dt>{'{usuario}'}</dt><dd>Nome do destinatário</dd></div>
+                <div><dt>{'{email}'}</dt><dd>Email do destinatário</dd></div>
+                <div><dt>{'{livro}'}</dt><dd>Livro do empréstimo selecionado</dd></div>
+                <div><dt>{'{dias}'}</dt><dd>Dias restantes para devolução</dd></div>
+                <div><dt>{'{data_devolucao}'}</dt><dd>Data prevista de devolução</dd></div>
+              </dl>
+              <p className="hint notice-variable-note">
+                Para livro, dias e data, selecione um empréstimo ativo no formulário.
+              </p>
+            </aside>
           </div>
         </div>
       )}

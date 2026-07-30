@@ -1,5 +1,17 @@
 export const updates = [
   {
+    version: 'v1.6.15',
+    date: '2026-07-30',
+    title: 'Variáveis nos avisos exclusivos',
+    summary: 'Avisos manuais agora podem usar dados do usuário e do empréstimo.',
+    items: [
+      'Avisos exclusivos substituem variáveis de usuário, email, livro, dias restantes e data de devolução.',
+      'O formulário permite selecionar um empréstimo ativo para preencher os dados do livro.',
+      'Um novo card ao lado do aviso explica todas as variáveis disponíveis.',
+      'A criação de automações extras foi temporariamente desabilitada.'
+    ]
+  },
+  {
     version: 'v1.6.14',
     date: '2026-07-30',
     title: 'Central de automações',

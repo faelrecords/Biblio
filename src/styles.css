@@ -343,6 +343,43 @@ label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec
   animation: modalIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .modal.small { max-width: 420px; }
+.notice-modal-layout {
+  width: min(920px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.82fr);
+  gap: 18px;
+  align-items: stretch;
+}
+.notice-modal-layout .modal { max-height: 90vh; }
+.notice-variable-card {
+  padding: 32px;
+  max-height: 90vh;
+  overflow: auto;
+}
+.notice-variable-card h2 { margin-bottom: 10px; }
+.notice-variable-list {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 0;
+}
+.notice-variable-list > div {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+.notice-variable-list dt {
+  color: var(--accent-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 700;
+}
+.notice-variable-list dd {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.notice-variable-note { margin-top: 18px; }
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(12px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -868,6 +905,20 @@ label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec
     padding: 24px 18px;
     border-radius: 20px;
     overflow-x: hidden;
+  }
+  .notice-modal-layout {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+  }
+  .notice-modal-layout .modal,
+  .notice-variable-card {
+    max-height: none;
+  }
+  .notice-variable-card {
+    padding: 22px 18px;
   }
   .modal-close {
     top: 12px;
