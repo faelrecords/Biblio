@@ -335,6 +335,15 @@ export default function AdminUsers() {
                 <button type="button" onClick={() => insertNoticeVariable('{email}')} className="notice-variable-button">
                   <strong>{'{email}'}</strong><span>Email do destinatário</span>
                 </button>
+                <button type="button" onClick={() => insertNoticeVariable('{livro}')} className="notice-variable-button">
+                  <strong>{'{livro}'}</strong><span>Livro do próximo empréstimo a vencer</span>
+                </button>
+                <button type="button" onClick={() => insertNoticeVariable('{dias}')} className="notice-variable-button">
+                  <strong>{'{dias}'}</strong><span>Dias restantes do próximo empréstimo a vencer</span>
+                </button>
+                <button type="button" onClick={() => insertNoticeVariable('{data_devolucao}')} className="notice-variable-button">
+                  <strong>{'{data_devolucao}'}</strong><span>Data do próximo empréstimo a vencer</span>
+                </button>
                 <button type="button" onClick={() => insertNoticeVariable('{emprestimo}')} className="notice-variable-button">
                   <strong>{'{emprestimo}'}</strong>
                   <span>Livro, data de devolução e dias restantes de todos os empréstimos ativos</span>

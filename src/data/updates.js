@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.17',
+    date: '2026-07-30',
+    title: 'Variáveis individuais restauradas',
+    summary: 'Mais liberdade para montar os avisos exclusivos.',
+    items: [
+      'Os atalhos {livro}, {dias} e {data_devolucao} voltaram ao card de variáveis.',
+      'A variável agrupada {emprestimo} continua disponível junto às variáveis individuais.'
+    ]
+  },
+  {
     version: 'v1.6.16',
     date: '2026-07-30',
     title: 'Atalhos de variáveis no aviso',
