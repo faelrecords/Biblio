@@ -153,6 +153,24 @@ export default function AdminAutomations() {
                   Campos disponíveis: {TRIGGERS[automation.trigger].placeholders}
                 </div>
               </div>
+              <div className="field">
+                <div className="automation-option-row">
+                  <div>
+                    <label style={{ margin: 0 }}>Enviar no Bitrix?</label>
+                    <div className="hint">
+                      {automation.send_bitrix !== false ? 'Sim — Biblio + Bitrix' : 'Não — somente Biblio'}
+                    </div>
+                  </div>
+                  <label className="toggle-switch" title={automation.send_bitrix !== false ? 'Desativar envio no Bitrix' : 'Ativar envio no Bitrix'}>
+                    <input
+                      type="checkbox"
+                      checked={automation.send_bitrix !== false}
+                      onChange={e => updateLocal(automation.id, { send_bitrix: e.target.checked })}
+                    />
+                    <span className="track"></span>
+                  </label>
+                </div>
+              </div>
 
               <div className="automation-form-actions">
                 {!automation.built_in && (

@@ -428,6 +428,7 @@ const AUTOMATION_DEFAULTS = [
     name: 'Empréstimo a expirar',
     trigger: 'loan_due_soon',
     enabled: true,
+    send_bitrix: true,
     days_before: 1,
     title: APP_NOTIFICATION_TITLE,
     sender_name: 'Sistema',
@@ -438,6 +439,7 @@ const AUTOMATION_DEFAULTS = [
     name: 'Livro liberado para o próximo da fila',
     trigger: 'waitlist_release',
     enabled: true,
+    send_bitrix: true,
     days_before: null,
     title: APP_NOTIFICATION_TITLE,
     sender_name: 'Sistema',
@@ -461,6 +463,7 @@ function cleanAutomation(input: Record<string, unknown>, base: Record<string, un
     name,
     trigger,
     enabled: typeof input.enabled === 'boolean' ? input.enabled : base.enabled !== false,
+    send_bitrix: typeof input.send_bitrix === 'boolean' ? input.send_bitrix : base.send_bitrix !== false,
     days_before: daysBefore,
     title: APP_NOTIFICATION_TITLE,
     sender_name: senderName,
@@ -576,16 +579,18 @@ async function dispatchAutomation(automation: Record<string, any>, context: Reco
     recipient_role: 'user',
     recipient_user_id: context.user.id
   });
-  try {
-    await sendBitrixUserNotification(context.user, message, senderName);
-  } catch (error) {
-    await createNotification({
-      type: 'automation_bitrix_failed',
-      title: 'Falha em automação no Bitrix24',
-      message: `${automation.name} para ${context.user.name || 'usuário'}: ${error instanceof Error ? error.message : 'erro desconhecido'}`,
-      book_id: context.book.id,
-      user_id: context.user.id
-    });
+  if (automation.send_bitrix !== false) {
+    try {
+      await sendBitrixUserNotification(context.user, message, senderName);
+    } catch (error) {
+      await createNotification({
+        type: 'automation_bitrix_failed',
+        title: 'Falha em automação no Bitrix24',
+        message: `${automation.name} para ${context.user.name || 'usuário'}: ${error instanceof Error ? error.message : 'erro desconhecido'}`,
+        book_id: context.book.id,
+        user_id: context.user.id
+      });
+    }
   }
   return true;
 }
@@ -1720,14 +1725,16 @@ async function handle(req: Request) {
       recipient_role: 'user',
       recipient_user_id: userId
     });
-    let bitrixDelivery: Record<string, unknown> = { status: 'not_applicable' };
-    try {
-      bitrixDelivery = await sendBitrixUserNotification(user, renderedMessage, senderName);
-    } catch (error) {
-      bitrixDelivery = {
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'falha ao enviar para o Bitrix24'
-      };
+    let bitrixDelivery: Record<string, unknown> = { status: 'skipped' };
+    if (input.send_bitrix !== false) {
+      try {
+        bitrixDelivery = await sendBitrixUserNotification(user, renderedMessage, senderName);
+      } catch (error) {
+        bitrixDelivery = {
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'falha ao enviar para o Bitrix24'
+        };
+      }
     }
     return json(req, { ...notification, bitrix_delivery: bitrixDelivery });
   }

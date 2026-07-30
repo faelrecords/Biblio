@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.22',
+    date: '2026-07-30',
+    title: 'Envio opcional para o Bitrix24',
+    summary: 'Cada mensagem pode permanecer somente no Biblio ou também seguir para o Bitrix24.',
+    items: [
+      'Avisos exclusivos ganharam o controle “Enviar no Bitrix?”.',
+      'Cada automação possui sua própria preferência entre Biblio ou Biblio + Bitrix.',
+      'O envio e o registro da notificação no Biblio continuam obrigatórios.'
+    ]
+  },
+  {
     version: 'v1.6.21',
     date: '2026-07-30',
     title: 'Dias com concordância correta',

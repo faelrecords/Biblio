@@ -723,6 +723,17 @@ label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec
   margin-top: 7px;
   line-height: 1.45;
 }
+.automation-option-row {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
 .automation-form-actions {
   display: flex;
   justify-content: flex-end;
