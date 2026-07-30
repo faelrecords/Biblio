@@ -362,24 +362,38 @@ label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec
   gap: 10px;
   margin: 22px 0 0;
 }
-.notice-variable-list > div {
+.notice-variable-button {
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.035);
 }
-.notice-variable-list dt {
+.notice-variable-button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.notice-variable-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  transform: translateY(-1px);
+}
+.notice-variable-button strong {
+  display: block;
   color: var(--accent-text);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;
   font-weight: 700;
 }
-.notice-variable-list dd {
-  margin: 4px 0 0;
+.notice-variable-button span {
+  display: block;
+  margin-top: 4px;
   color: var(--text-secondary);
   font-size: 12px;
 }
-.notice-variable-note { margin-top: 18px; }
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(12px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }

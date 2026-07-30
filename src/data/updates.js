@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.16',
+    date: '2026-07-30',
+    title: 'Atalhos de variáveis no aviso',
+    summary: 'O aviso exclusivo ficou mais simples e rápido de preencher.',
+    items: [
+      'As variáveis agora são botões que inserem o campo exatamente na posição do cursor.',
+      'O aviso exclusivo passou a ter apenas o campo Mensagem.',
+      'A variável {emprestimo} reúne livro, data de devolução e dias restantes de todos os empréstimos ativos.'
+    ]
+  },
+  {
     version: 'v1.6.15',
     date: '2026-07-30',
     title: 'Variáveis nos avisos exclusivos',
