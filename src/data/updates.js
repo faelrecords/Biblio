@@ -1,5 +1,14 @@
 export const updates = [
   {
+    version: 'v1.6.19',
+    date: '2026-07-30',
+    title: 'Alerta visual no Bitrix24',
+    summary: 'O cabeçalho dos avisos ficou mais fácil de identificar.',
+    items: [
+      'O título vermelho “Aviso da Biblioteca” agora exibe um símbolo de alerta em cada lado.'
+    ]
+  },
+  {
     version: 'v1.6.18',
     date: '2026-07-30',
     title: 'Cabeçalho padrão das notificações',

@@ -7,7 +7,7 @@ const ADMIN_SETUP_TOKEN = Deno.env.get('ADMIN_SETUP_TOKEN') || '';
 const CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
 const BITRIX24_WEBHOOK_URL = Deno.env.get('BITRIX24_WEBHOOK_URL') || '';
 const APP_NOTIFICATION_TITLE = 'Aviso da Biblioteca';
-const BITRIX_NOTIFICATION_TITLE = '[b][color=#FF0000]Aviso da Biblioteca[/color][/b]';
+const BITRIX_NOTIFICATION_TITLE = '[b][color=#FF0000]⚠️ Aviso da Biblioteca ⚠️[/color][/b]';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false }
