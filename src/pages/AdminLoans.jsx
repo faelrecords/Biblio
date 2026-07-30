@@ -32,6 +32,7 @@ export default function AdminLoans() {
   const [appliedEnd, setAppliedEnd] = useState('');
   const [showDate, setShowDate] = useState(false);
   const [approving, setApproving] = useState(null);
+  const [adjusting, setAdjusting] = useState(null);
   const dateRef = useRef(null);
 
   async function load() {
@@ -161,7 +162,10 @@ export default function AdminLoans() {
                   </>
                 )}
                 {l.status === 'approved' && (
-                  <button className="btn sm success" onClick={() => ret(l.id)}>Devolver</button>
+                  <>
+                    <button className="btn sm ghost" onClick={() => setAdjusting(l)}>Reajustar prazo</button>
+                    <button className="btn sm success" onClick={() => ret(l.id)}>Devolver</button>
+                  </>
                 )}
               </div>
             </div>
@@ -174,6 +178,16 @@ export default function AdminLoans() {
           loan={approving}
           onClose={() => setApproving(null)}
           onDone={() => { setApproving(null); load(); }}
+        />
+      )}
+
+      {adjusting && (
+        <ApprovalModal
+          loan={adjusting}
+          adjust
+          initialDays={Math.max(1, daysLeft(adjusting.due_at) || 1)}
+          onClose={() => setAdjusting(null)}
+          onDone={() => { setAdjusting(null); load(); }}
         />
       )}
     </div>

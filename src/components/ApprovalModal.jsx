@@ -3,8 +3,8 @@ import { api } from '../api';
 
 const PRESETS = [7, 14, 21, 30];
 
-export default function ApprovalModal({ loan, book, selfApprove, currentUser, users, onClose, onDone }) {
-  const [days, setDays] = useState(14);
+export default function ApprovalModal({ loan, book, selfApprove, adjust, initialDays = 14, currentUser, users, onClose, onDone }) {
+  const [days, setDays] = useState(initialDays);
   const [targetUserId, setTargetUserId] = useState(currentUser?.id || '');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
@@ -39,7 +39,7 @@ export default function ApprovalModal({ loan, book, selfApprove, currentUser, us
       <div className="modal small glass glass-strong" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>×</button>
         <div className="subtitle" style={{ textAlign: 'center' }}>
-          {isSelf ? 'Auto-empréstimo' : 'Aprovar empréstimo'}
+          {isSelf ? 'Auto-empréstimo' : (adjust ? 'Reajustar prazo' : 'Aprovar empréstimo')}
         </div>
         <h2 style={{ textAlign: 'center', marginBottom: 4 }}>{title}</h2>
         <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 22, fontSize: 13 }}>
@@ -87,7 +87,7 @@ export default function ApprovalModal({ loan, book, selfApprove, currentUser, us
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
           <button className="btn accent" onClick={confirm} disabled={loading}>
-            {loading ? 'Processando...' : (isSelf ? 'Confirmar empréstimo' : 'Confirmar aprovação')}
+            {loading ? 'Processando...' : (isSelf ? 'Confirmar empréstimo' : (adjust ? 'Salvar novo prazo' : 'Confirmar aprovação'))}
           </button>
         </div>
       </div>
