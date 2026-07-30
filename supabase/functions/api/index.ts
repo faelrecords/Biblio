@@ -5,6 +5,8 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '
 const JWT_SECRET = Deno.env.get('JWT_SECRET') || '';
 const ADMIN_SETUP_TOKEN = Deno.env.get('ADMIN_SETUP_TOKEN') || '';
 const CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
+const BITRIX24_WEBHOOK_URL = Deno.env.get('BITRIX24_WEBHOOK_URL') || '';
+const BITRIX_TEST_USER_ID = 657;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false }
@@ -374,6 +376,49 @@ async function createNotification(input: Record<string, unknown>) {
   const { data, error } = await supabase.from('notifications').insert(payload).select('*').single();
   dbError(error);
   return data;
+}
+
+async function callBitrix(method: string, params: Record<string, unknown>) {
+  if (!BITRIX24_WEBHOOK_URL) throw new Error('webhook do Bitrix24 não configurado');
+  const endpoint = `${BITRIX24_WEBHOOK_URL.replace(/\/+$/, '')}/${method}.json`;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(params),
+    signal: AbortSignal.timeout(10000)
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.error) {
+    throw new Error(payload?.error_description || payload?.error || `Bitrix24 respondeu ${response.status}`);
+  }
+  return payload?.result;
+}
+
+async function sendBitrixUserNotification(user: Record<string, unknown>, title: string, message: string) {
+  const email = String(user.email || '').trim();
+  if (!email) throw new Error('usuário sem email para localizar no Bitrix24');
+
+  const matches = await callBitrix('user.get', {
+    filter: { EMAIL: email, ACTIVE: true }
+  });
+  const exactMatches = (Array.isArray(matches) ? matches : []).filter(
+    item => String(item?.EMAIL || '').trim().toLowerCase() === email.toLowerCase()
+  );
+  if (exactMatches.length === 0) throw new Error('usuário não encontrado no Bitrix24 pelo email');
+  if (exactMatches.length > 1) throw new Error('mais de um usuário encontrado no Bitrix24 pelo email');
+
+  const bitrixUserId = String(exactMatches[0].ID || '').trim();
+  if (!bitrixUserId) throw new Error('usuário do Bitrix24 sem identificador');
+  const messageId = await callBitrix('im.message.add', {
+    DIALOG_ID: bitrixUserId,
+    MESSAGE: `${title}\n\n${message}`,
+    SYSTEM: 'N',
+    URL_PREVIEW: 'N'
+  });
+  return { status: 'sent', user_id: bitrixUserId, message_id: messageId };
 }
 
 async function enrichLoan(loan: Record<string, unknown>) {
@@ -1421,15 +1466,27 @@ async function handle(req: Request) {
     if (!userId || !message) throw new HttpError(400, 'usuário e aviso obrigatórios');
     const user = await findUser(userId);
     if (!user) throw new HttpError(404, 'usuário não existe');
+    const title = String(input.title || 'Aviso da biblioteca').trim() || 'Aviso da biblioteca';
     const notification = await createNotification({
       type: 'admin_message',
-      title: String(input.title || 'Aviso da biblioteca').trim() || 'Aviso da biblioteca',
+      title,
       message,
       user_id: userId,
       recipient_role: 'user',
       recipient_user_id: userId
     });
-    return json(req, notification);
+    let bitrixDelivery: Record<string, unknown> = { status: 'not_applicable' };
+    if (userId === BITRIX_TEST_USER_ID) {
+      try {
+        bitrixDelivery = await sendBitrixUserNotification(user, title, message);
+      } catch (error) {
+        bitrixDelivery = {
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'falha ao enviar para o Bitrix24'
+        };
+      }
+    }
+    return json(req, { ...notification, bitrix_delivery: bitrixDelivery });
   }
   if (method === 'POST' && path === '/notifications/send-all') {
     await requireAdmin(req);

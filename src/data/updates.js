@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.12',
+    date: '2026-07-30',
+    title: 'Aviso exclusivo no Bitrix24',
+    summary: 'Teste de integração entre o Biblio e o chat corporativo.',
+    items: [
+      'Avisos exclusivos enviados ao usuário Rafael também são encaminhados ao chat do Bitrix24.',
+      'O administrador recebe a confirmação do envio ou uma mensagem de falha da integração.'
+    ]
+  },
+  {
     version: 'v1.6.11',
     date: '2026-07-30',
     title: 'Reajuste de prazo',

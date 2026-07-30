@@ -14,6 +14,7 @@ export default function AdminUsers() {
   const [noticeUser, setNoticeUser] = useState(null);
   const [notice, setNotice] = useState({ title: 'Aviso da biblioteca', message: '' });
   const [noticeErr, setNoticeErr] = useState('');
+  const [noticeResult, setNoticeResult] = useState(null);
   const [noticeLoading, setNoticeLoading] = useState(false);
   const [query, setQuery] = useState('');
   const me = getProfile();
@@ -69,17 +70,26 @@ export default function AdminUsers() {
     setNoticeUser(user);
     setNotice({ title: 'Aviso da biblioteca', message: '' });
     setNoticeErr('');
+    setNoticeResult(null);
   }
 
   async function sendNotice() {
     setNoticeErr('');
     setNoticeLoading(true);
     try {
-      await api.post('/notifications/send-user', {
+      const result = await api.post('/notifications/send-user', {
         user_id: noticeUser.id,
         title: notice.title,
         message: notice.message
       });
+      const bitrix = result.bitrix_delivery;
+      if (bitrix?.status === 'sent') {
+        setNoticeResult({ type: 'success', message: 'Aviso enviado no Biblio e no chat do Bitrix24.' });
+      } else if (bitrix?.status === 'failed') {
+        setNoticeResult({ type: 'error', message: `Aviso enviado no Biblio, mas falhou no Bitrix24: ${bitrix.error}` });
+      } else {
+        setNoticeResult({ type: 'success', message: 'Aviso enviado no Biblio.' });
+      }
       setNoticeUser(null);
     } catch (e) {
       setNoticeErr(e.message);
@@ -136,6 +146,12 @@ export default function AdminUsers() {
           style={{ maxWidth: 420 }}
         />
       </div>
+
+      {noticeResult && (
+        <div className={noticeResult.type === 'error' ? 'error-msg' : 'success-msg'}>
+          {noticeResult.message}
+        </div>
+      )}
 
       <div className="glass list-card">
         {visibleUsers.length === 0 && <div className="empty-state">Nenhum usuário encontrado.</div>}
