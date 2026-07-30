@@ -6,7 +6,6 @@ const JWT_SECRET = Deno.env.get('JWT_SECRET') || '';
 const ADMIN_SETUP_TOKEN = Deno.env.get('ADMIN_SETUP_TOKEN') || '';
 const CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
 const BITRIX24_WEBHOOK_URL = Deno.env.get('BITRIX24_WEBHOOK_URL') || '';
-const BITRIX_TEST_BIBLIO_ACCESS_CODE = Deno.env.get('BITRIX_TEST_BIBLIO_ACCESS_CODE') || '';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false }
@@ -1476,16 +1475,13 @@ async function handle(req: Request) {
       recipient_user_id: userId
     });
     let bitrixDelivery: Record<string, unknown> = { status: 'not_applicable' };
-    if (BITRIX_TEST_BIBLIO_ACCESS_CODE
-      && String(user.access_code || '').trim() === BITRIX_TEST_BIBLIO_ACCESS_CODE) {
-      try {
-        bitrixDelivery = await sendBitrixUserNotification(user, title, message);
-      } catch (error) {
-        bitrixDelivery = {
-          status: 'failed',
-          error: error instanceof Error ? error.message : 'falha ao enviar para o Bitrix24'
-        };
-      }
+    try {
+      bitrixDelivery = await sendBitrixUserNotification(user, title, message);
+    } catch (error) {
+      bitrixDelivery = {
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'falha ao enviar para o Bitrix24'
+      };
     }
     return json(req, { ...notification, bitrix_delivery: bitrixDelivery });
   }

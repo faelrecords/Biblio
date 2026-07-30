@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.13',
+    date: '2026-07-30',
+    title: 'Avisos exclusivos no Bitrix24',
+    summary: 'Integração liberada para todos os destinatários cadastrados.',
+    items: [
+      'Administradores podem enviar avisos exclusivos para qualquer usuário no Biblio e no Bitrix24.',
+      'O destinatário no Bitrix24 é localizado pelo mesmo email cadastrado no Biblio.'
+    ]
+  },
+  {
     version: 'v1.6.12',
     date: '2026-07-30',
     title: 'Aviso exclusivo no Bitrix24',
