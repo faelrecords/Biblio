@@ -1,5 +1,17 @@
 export const updates = [
   {
+    version: 'v1.6.14',
+    date: '2026-07-30',
+    title: 'Central de automações',
+    summary: 'Mensagens automáticas configuráveis para empréstimos e fila.',
+    items: [
+      'Nova aba Automações com ativação individual, mensagens editáveis e regras personalizadas.',
+      'Automação configurável para empréstimos próximos do vencimento.',
+      'Automação para avisar o próximo da fila assim que o livro for devolvido.',
+      'A logo Biblio agora mostra ou esconde as abas do menu administrativo.'
+    ]
+  },
+  {
     version: 'v1.6.13',
     date: '2026-07-30',
     title: 'Avisos exclusivos no Bitrix24',

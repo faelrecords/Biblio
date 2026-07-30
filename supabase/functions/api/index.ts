@@ -420,6 +420,171 @@ async function sendBitrixUserNotification(user: Record<string, unknown>, title: 
   return { status: 'sent', user_id: bitrixUserId, message_id: messageId };
 }
 
+const AUTOMATION_DEFAULTS = [
+  {
+    key: 'builtin:due_soon',
+    name: 'Empréstimo a expirar',
+    trigger: 'loan_due_soon',
+    enabled: true,
+    days_before: 1,
+    title: 'Empréstimo a expirar',
+    message: 'Olá, {usuario}. O empréstimo de {livro} expira em {dias} dia(s), em {data_devolucao}.'
+  },
+  {
+    key: 'builtin:waitlist_release',
+    name: 'Livro liberado para o próximo da fila',
+    trigger: 'waitlist_release',
+    enabled: true,
+    days_before: null,
+    title: 'Livro disponível para você',
+    message: 'Olá, {usuario}. {livro} foi devolvido e está reservado para você até {data_limite}.'
+  }
+];
+const AUTOMATION_TRIGGERS = new Set(['loan_due_soon', 'waitlist_release']);
+
+function cleanAutomation(input: Record<string, unknown>, base: Record<string, unknown> = {}) {
+  const trigger = String(input.trigger || base.trigger || '');
+  if (!AUTOMATION_TRIGGERS.has(trigger)) throw new HttpError(400, 'gatilho de automação inválido');
+  const name = String(input.name ?? base.name ?? '').trim();
+  const title = String(input.title ?? base.title ?? '').trim();
+  const message = String(input.message ?? base.message ?? '').trim();
+  if (!name || !title || !message) throw new HttpError(400, 'nome, título e mensagem são obrigatórios');
+  const daysBeforeRaw = Number(input.days_before ?? base.days_before ?? 1);
+  const daysBefore = trigger === 'loan_due_soon'
+    ? Math.min(60, Math.max(1, Math.round(daysBeforeRaw || 1)))
+    : null;
+  return {
+    name,
+    trigger,
+    enabled: typeof input.enabled === 'boolean' ? input.enabled : base.enabled !== false,
+    days_before: daysBefore,
+    title,
+    message
+  };
+}
+
+function automationFromRow(row: Record<string, any>): Record<string, any> | null {
+  try {
+    const config = JSON.parse(String(row.message || '{}'));
+    return {
+      id: row.id,
+      key: row.title,
+      built_in: String(row.title || '').startsWith('builtin:'),
+      ...cleanAutomation(config)
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isAutomation(item: Record<string, any> | null): item is Record<string, any> {
+  return item !== null;
+}
+
+async function ensureDefaultAutomations() {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('title')
+    .eq('type', 'automation_config')
+    .in('title', AUTOMATION_DEFAULTS.map(item => item.key));
+  dbError(error);
+  const existing = new Set((data || []).map(item => item.title));
+  const missing = AUTOMATION_DEFAULTS
+    .filter(item => !existing.has(item.key))
+    .map(item => ({
+      type: 'automation_config',
+      title: item.key,
+      message: JSON.stringify(item),
+      recipient_role: 'user',
+      recipient_user_id: null
+    }));
+  if (missing.length > 0) {
+    const { error: insertError } = await supabase.from('notifications').insert(missing);
+    dbError(insertError);
+  }
+}
+
+async function listAutomations(enabledOnly = false) {
+  await ensureDefaultAutomations();
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('type', 'automation_config')
+    .order('created_at');
+  dbError(error);
+  const automations = (data || []).map(automationFromRow).filter(isAutomation);
+  return enabledOnly ? automations.filter(item => item.enabled) : automations;
+}
+
+function formatAutomationDate(value: unknown) {
+  if (!value) return '';
+  return new Date(String(value)).toLocaleString('pt-BR');
+}
+
+function renderAutomationText(template: string, values: Record<string, unknown>) {
+  return template.replace(/\{([a-z_]+)\}/gi, (_match, key) => String(values[key] ?? ''));
+}
+
+async function automationAlreadySent(automationId: number, context: Record<string, any>) {
+  let query = supabase
+    .from('notifications')
+    .select('id')
+    .eq('type', `automation_delivery:${automationId}`)
+    .eq('recipient_role', 'user')
+    .eq('recipient_user_id', context.user.id)
+    .limit(1);
+  if (context.loan?.id) query = query.eq('loan_id', context.loan.id);
+  if (context.waitlist?.id) query = query.eq('waitlist_id', context.waitlist.id);
+  const { data, error } = await query;
+  dbError(error);
+  return (data || []).length > 0;
+}
+
+async function dispatchAutomation(automation: Record<string, any>, context: Record<string, any>) {
+  if (await automationAlreadySent(automation.id, context)) return false;
+  const values = {
+    usuario: context.user.name || 'usuário',
+    livro: context.book.title || 'Livro',
+    dias: context.days ?? '',
+    data_devolucao: formatAutomationDate(context.loan?.due_at),
+    data_limite: formatAutomationDate(context.hold_until)
+  };
+  const title = renderAutomationText(automation.title, values);
+  const message = renderAutomationText(automation.message, values);
+  await createNotification({
+    type: `automation_delivery:${automation.id}`,
+    title,
+    message,
+    loan_id: context.loan?.id,
+    book_id: context.book.id,
+    user_id: context.user.id,
+    waitlist_id: context.waitlist?.id,
+    recipient_role: 'user',
+    recipient_user_id: context.user.id
+  });
+  try {
+    await sendBitrixUserNotification(context.user, title, message);
+  } catch (error) {
+    await createNotification({
+      type: 'automation_bitrix_failed',
+      title: 'Falha em automação no Bitrix24',
+      message: `${automation.name} para ${context.user.name || 'usuário'}: ${error instanceof Error ? error.message : 'erro desconhecido'}`,
+      book_id: context.book.id,
+      user_id: context.user.id
+    });
+  }
+  return true;
+}
+
+async function runWaitlistReleaseAutomations(book: Record<string, any>, waitlist: Record<string, any>, holdUntil: string) {
+  const user = await findUser(waitlist.user_id);
+  if (!user) return;
+  const automations = (await listAutomations(true)).filter(item => item.trigger === 'waitlist_release');
+  for (const automation of automations) {
+    await dispatchAutomation(automation, { user, book, waitlist, hold_until: holdUntil });
+  }
+}
+
 async function enrichLoan(loan: Record<string, unknown>) {
   const [book, user, approver, returner] = await Promise.all([
     findBook(loan.book_id as number),
@@ -711,6 +876,7 @@ async function activateFirstWaitlistHold(book: Record<string, unknown>, waitlist
 
 async function runReminders() {
   const now = new Date();
+  const dueAutomations = (await listAutomations(true)).filter(item => item.trigger === 'loan_due_soon');
   const { data: loans, error } = await supabase.from('loans').select('*').eq('status', 'approved');
   dbError(error);
   for (const loan of loans || []) {
@@ -718,19 +884,20 @@ async function runReminders() {
     const due = new Date(loan.due_at);
     const hoursUntil = (due.getTime() - now.getTime()) / 3600000;
     const queue = await waitlistForBook(loan.book_id);
-    if (!loan.reminder_sent && hoursUntil <= 24 && hoursUntil > 0) {
-      const enriched = await enrichLoan(loan);
-      await createNotification({
-        type: 'reader_due_soon',
-        title: 'Falta 1 dia para devolver',
-        message: `${enriched.book_title} vence em breve. Renove ou devolva antes do prazo.`,
-        loan_id: loan.id,
-        book_id: loan.book_id,
-        user_id: loan.user_id,
-        recipient_role: 'user',
-        recipient_user_id: loan.user_id
+    for (const automation of dueAutomations) {
+      if (hoursUntil <= 0 || hoursUntil > Number(automation.days_before || 1) * 24) continue;
+      const [book, user] = await Promise.all([findBook(loan.book_id), findUser(loan.user_id)]);
+      if (!book || !user) continue;
+      await dispatchAutomation(automation, {
+        user,
+        book,
+        loan,
+        days: Math.max(1, Math.ceil(hoursUntil / 24))
       });
+    }
+    if (!loan.reminder_sent && hoursUntil <= 24 && hoursUntil > 0) {
       if (queue.length > 0) {
+        const enriched = await enrichLoan(loan);
         await createNotification({
           type: 'due_soon_with_queue',
           title: 'Devolução em menos de 24h com fila',
@@ -876,6 +1043,64 @@ async function handle(req: Request) {
     await requireAdmin(req);
     return json(req, await updateSettings(await body(req)));
   }
+  if (method === 'GET' && path === '/automations') {
+    await requireAdmin(req);
+    return json(req, await listAutomations());
+  }
+  if (method === 'POST' && path === '/automations') {
+    await requireAdmin(req);
+    const config = cleanAutomation(await body(req));
+    const key = `custom:${crypto.randomUUID()}`;
+    const { data, error } = await supabase.from('notifications').insert({
+      type: 'automation_config',
+      title: key,
+      message: JSON.stringify(config),
+      recipient_role: 'user',
+      recipient_user_id: null
+    }).select('*').single();
+    dbError(error);
+    return json(req, automationFromRow(data), 201);
+  }
+  const automationId = path.match(/^\/automations\/(\d+)$/)?.[1];
+  if (automationId && method === 'PUT') {
+    await requireAdmin(req);
+    const { data: row, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('id', automationId)
+      .eq('type', 'automation_config')
+      .maybeSingle();
+    dbError(error);
+    if (!row) throw new HttpError(404, 'automação não existe');
+    const current = automationFromRow(row);
+    if (!current) throw new HttpError(500, 'automação inválida');
+    const input = await body(req);
+    if (current.built_in) input.trigger = current.trigger;
+    const config = cleanAutomation(input, current);
+    const { data, error: updateError } = await supabase
+      .from('notifications')
+      .update({ message: JSON.stringify(config) })
+      .eq('id', automationId)
+      .select('*')
+      .single();
+    dbError(updateError);
+    return json(req, automationFromRow(data));
+  }
+  if (automationId && method === 'DELETE') {
+    await requireAdmin(req);
+    const { data: row, error } = await supabase
+      .from('notifications')
+      .select('title')
+      .eq('id', automationId)
+      .eq('type', 'automation_config')
+      .maybeSingle();
+    dbError(error);
+    if (!row) throw new HttpError(404, 'automação não existe');
+    if (String(row.title || '').startsWith('builtin:')) throw new HttpError(400, 'automação padrão não pode ser excluída');
+    const { error: deleteError } = await supabase.from('notifications').delete().eq('id', automationId);
+    dbError(deleteError);
+    return json(req, { ok: true });
+  }
 
   if (method === 'GET' && path === '/books') return json(req, await listBooks(await requestIsAdmin(req)));
   if (method === 'GET' && path === '/books/search-external') {
@@ -900,6 +1125,7 @@ async function handle(req: Request) {
       waitlist_hold_hours: typeof input.waitlist_hold_hours === 'number' ? input.waitlist_hold_hours : null
     }).select('id').single();
     dbError(error);
+    if (!data) throw new HttpError(500, 'livro não foi criado');
     return json(req, { id: data.id });
   }
   const bookId = path.match(/^\/books\/(\d+)$/)?.[1];
@@ -1168,16 +1394,7 @@ async function handle(req: Request) {
           user_id: queue[0].user_id,
           waitlist_id: queue[0].id
         });
-        await createNotification({
-          type: 'reader_waitlist_turn',
-          title: 'Sua vez na fila',
-          message: `${book.title} está disponível para você até ${new Date(hold).toLocaleString('pt-BR')}.`,
-          book_id: book.id,
-          user_id: queue[0].user_id,
-          waitlist_id: queue[0].id,
-          recipient_role: 'user',
-          recipient_user_id: queue[0].user_id
-        });
+        await runWaitlistReleaseAutomations(book, queue[0], hold);
       }
     }
     return json(req, { ok: true });
@@ -1245,16 +1462,7 @@ async function handle(req: Request) {
         user_id: queue[0].user_id,
         waitlist_id: queue[0].id
       });
-      await createNotification({
-        type: 'reader_waitlist_turn',
-        title: 'Sua vez na fila',
-        message: `${book.title} está disponível para você até ${new Date(hold).toLocaleString('pt-BR')}.`,
-        book_id: book.id,
-        user_id: queue[0].user_id,
-        waitlist_id: queue[0].id,
-        recipient_role: 'user',
-        recipient_user_id: queue[0].user_id
-      });
+      await runWaitlistReleaseAutomations(book, queue[0], hold);
     }
     await createNotification({
       type: 'self_return',
@@ -1561,6 +1769,7 @@ async function handle(req: Request) {
     const { count, error } = await supabase
       .from('notifications')
       .delete({ count: 'exact' })
+      .not('type', 'like', 'automation_%')
       .gte('created_at', start.toISOString())
       .lte('created_at', end.toISOString());
     dbError(error);

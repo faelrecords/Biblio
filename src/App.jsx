@@ -15,6 +15,7 @@ import AdminSettings from './pages/AdminSettings';
 import AdminSuggestions from './pages/AdminSuggestions';
 import AdminReviews from './pages/AdminReviews';
 import AdminUpdates from './pages/AdminUpdates';
+import AdminAutomations from './pages/AdminAutomations';
 import NotificationBell from './components/NotificationBell';
 
 const SECRET_THEME_STORAGE_KEY = 'biblio.secretTheme.v1';
@@ -192,21 +193,19 @@ function Navbar({ variant, onSecretTitleClick }) {
           >
             Menu
           </button>
-          <Link to="/admin" className="nav-brand" onClick={clickSecretTitle}>{brand}</Link>
+          <button
+            type="button"
+            className="nav-brand nav-brand-toggle"
+            onClick={() => { toggleAdminNav(); clickSecretTitle(); }}
+            aria-pressed={!adminNavCollapsed}
+            title={adminNavCollapsed ? 'Mostrar abas' : 'Esconder abas'}
+          >
+            {brand}
+          </button>
           <div className="nav-notifications-mobile">
             <NotificationBell />
           </div>
         </div>
-        <button
-          type="button"
-          className={`nav-tabs-switch ${adminNavCollapsed ? '' : 'on'}`}
-          onClick={toggleAdminNav}
-          aria-pressed={!adminNavCollapsed}
-          title={adminNavCollapsed ? 'Mostrar abas' : 'Esconder abas'}
-        >
-          <span />
-          Abas
-        </button>
         <div className={`nav-links admin-nav-links ${adminMenuOpen ? 'open' : ''}`}>
           <Link onClick={closeAdminMenu} to="/admin" className={`nav-link ${loc.pathname === '/admin' ? 'active' : ''}`}>Painel</Link>
           <Link onClick={closeAdminMenu} to="/admin/biblioteca" className={`nav-link ${loc.pathname === '/admin/biblioteca' ? 'active' : ''}`}>Biblioteca</Link>
@@ -217,6 +216,7 @@ function Navbar({ variant, onSecretTitleClick }) {
           <Link onClick={closeAdminMenu} to="/admin/leituras" className={`nav-link ${loc.pathname === '/admin/leituras' ? 'active' : ''}`}>Leituras</Link>
           <Link onClick={closeAdminMenu} to="/admin/sugestoes" className={`nav-link ${loc.pathname === '/admin/sugestoes' ? 'active' : ''}`}>Sugestões</Link>
           <Link onClick={closeAdminMenu} to="/admin/avaliacoes" className={`nav-link ${loc.pathname === '/admin/avaliacoes' ? 'active' : ''}`}>Avaliações</Link>
+          <Link onClick={closeAdminMenu} to="/admin/automacoes" className={`nav-link ${loc.pathname === '/admin/automacoes' ? 'active' : ''}`}>Automações</Link>
           <Link onClick={closeAdminMenu} to="/admin/configuracoes" className={`nav-link ${loc.pathname === '/admin/configuracoes' ? 'active' : ''}`}>Configurações</Link>
           <Link onClick={closeAdminMenu} to="/admin/updates" className={`nav-link ${loc.pathname === '/admin/updates' ? 'active' : ''}`}>Updates</Link>
           <div className="nav-notifications-desktop">
@@ -300,6 +300,7 @@ export default function App() {
         <Route path="/admin/leituras" element={<AdminGuard><AdminReads /></AdminGuard>} />
         <Route path="/admin/sugestoes" element={<AdminGuard><AdminSuggestions /></AdminGuard>} />
         <Route path="/admin/avaliacoes" element={<AdminGuard><AdminReviews /></AdminGuard>} />
+        <Route path="/admin/automacoes" element={<AdminGuard><AdminAutomations /></AdminGuard>} />
         <Route path="/admin/configuracoes" element={<AdminGuard><AdminSettings /></AdminGuard>} />
         <Route path="/admin/updates" element={<AdminGuard><AdminUpdates /></AdminGuard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
