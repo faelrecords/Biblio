@@ -1369,6 +1369,26 @@ async function handle(req: Request) {
     return json(req, { ok: true });
   }
 
+  const adjustLoanId = path.match(/^\/loans\/(\d+)\/adjust-days$/)?.[1];
+  if (adjustLoanId && method === 'POST') {
+    await requireAdmin(req);
+    const loan = await findLoan(adjustLoanId);
+    if (!loan || loan.status !== 'approved') throw new HttpError(400, 'empréstimo não está ativo');
+    const input = await body(req);
+    const days = Math.round(Number(input.days));
+    if (!Number.isFinite(days) || days < 1 || days > 90) {
+      throw new HttpError(400, 'o prazo deve ficar entre 1 e 90 dias');
+    }
+    const dueAt = new Date(Date.now() + days * 86400000).toISOString();
+    await updateLoan(loan.id, {
+      due_at: dueAt,
+      days,
+      reminder_sent: false,
+      overdue_notified: false
+    });
+    return json(req, { ok: true, due_at: dueAt, days });
+  }
+
   const rejectLoanId = path.match(/^\/loans\/(\d+)\/reject$/)?.[1];
   if (rejectLoanId && method === 'POST') {
     await requireAdmin(req);

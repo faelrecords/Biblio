@@ -24,6 +24,8 @@ export default function ApprovalModal({ loan, book, selfApprove, adjust, initial
           user_id: Number(targetUserId) || currentUser?.id,
           days
         });
+      } else if (adjust) {
+        await api.post(`/loans/${loan.id}/adjust-days`, { days });
       } else {
         await api.post(`/loans/${loan.id}/approve`, { days });
       }

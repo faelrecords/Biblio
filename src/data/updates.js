@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.23',
+    date: '2026-08-03',
+    title: 'Correção no reajuste de prazo',
+    summary: 'O prazo de empréstimos ativos volta a ser salvo corretamente.',
+    items: [
+      'Reajustar prazo não tenta mais aprovar novamente um empréstimo já ativo.',
+      'O novo prazo aceita entre 1 e 90 dias e reinicia os lembretes de vencimento.'
+    ]
+  },
+  {
     version: 'v1.6.22',
     date: '2026-07-30',
     title: 'Envio opcional para o Bitrix24',
