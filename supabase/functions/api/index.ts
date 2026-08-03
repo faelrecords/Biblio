@@ -121,6 +121,12 @@ async function requireAdmin(req: Request) {
   return payload;
 }
 
+async function requireSuperAdmin(req: Request) {
+  const payload = await requireAdmin(req);
+  if (!payload.is_super) throw new HttpError(403, 'recurso exclusivo do super admin');
+  return payload;
+}
+
 async function requestIsAdmin(req: Request) {
   const header = req.headers.get('authorization') || '';
   const token = header.replace(/^Bearer\s+/i, '');
@@ -1063,16 +1069,16 @@ async function handle(req: Request) {
     return json(req, await updateSettings(await body(req)));
   }
   if (method === 'GET' && path === '/automations') {
-    await requireAdmin(req);
+    await requireSuperAdmin(req);
     return json(req, await listAutomations());
   }
   if (method === 'POST' && path === '/automations') {
-    await requireAdmin(req);
+    await requireSuperAdmin(req);
     throw new HttpError(403, 'novas automações estão temporariamente desabilitadas');
   }
   const automationId = path.match(/^\/automations\/(\d+)$/)?.[1];
   if (automationId && method === 'PUT') {
-    const auth = await requireAdmin(req);
+    const auth = await requireSuperAdmin(req);
     const { data: row, error } = await supabase
       .from('notifications')
       .select('*')
@@ -1097,7 +1103,7 @@ async function handle(req: Request) {
     return json(req, automationFromRow(data));
   }
   if (automationId && method === 'DELETE') {
-    await requireAdmin(req);
+    await requireSuperAdmin(req);
     const { data: row, error } = await supabase
       .from('notifications')
       .select('title')
@@ -1746,7 +1752,7 @@ async function handle(req: Request) {
       recipient_user_id: userId
     });
     let bitrixDelivery: Record<string, unknown> = { status: 'skipped' };
-    if (input.send_bitrix !== false) {
+    if (auth.is_super && input.send_bitrix !== false) {
       try {
         bitrixDelivery = await sendBitrixUserNotification(user, renderedMessage, senderName);
       } catch (error) {

@@ -216,7 +216,9 @@ function Navbar({ variant, onSecretTitleClick }) {
           <Link onClick={closeAdminMenu} to="/admin/leituras" className={`nav-link ${loc.pathname === '/admin/leituras' ? 'active' : ''}`}>Leituras</Link>
           <Link onClick={closeAdminMenu} to="/admin/sugestoes" className={`nav-link ${loc.pathname === '/admin/sugestoes' ? 'active' : ''}`}>Sugestões</Link>
           <Link onClick={closeAdminMenu} to="/admin/avaliacoes" className={`nav-link ${loc.pathname === '/admin/avaliacoes' ? 'active' : ''}`}>Avaliações</Link>
-          <Link onClick={closeAdminMenu} to="/admin/automacoes" className={`nav-link ${loc.pathname === '/admin/automacoes' ? 'active' : ''}`}>Automações</Link>
+          {profile?.is_super && (
+            <Link onClick={closeAdminMenu} to="/admin/automacoes" className={`nav-link ${loc.pathname === '/admin/automacoes' ? 'active' : ''}`}>Automações</Link>
+          )}
           <Link onClick={closeAdminMenu} to="/admin/configuracoes" className={`nav-link ${loc.pathname === '/admin/configuracoes' ? 'active' : ''}`}>Configurações</Link>
           <Link onClick={closeAdminMenu} to="/admin/updates" className={`nav-link ${loc.pathname === '/admin/updates' ? 'active' : ''}`}>Updates</Link>
           <div className="nav-notifications-desktop">
@@ -234,6 +236,13 @@ function Navbar({ variant, onSecretTitleClick }) {
 
 function AdminGuard({ children }) {
   if (!isAdmin()) return <Navigate to="/admin-login" replace />;
+  return children;
+}
+
+function SuperAdminGuard({ children }) {
+  const profile = getProfile();
+  if (!isAdmin()) return <Navigate to="/admin-login" replace />;
+  if (!profile?.is_super) return <Navigate to="/admin" replace />;
   return children;
 }
 
@@ -300,7 +309,7 @@ export default function App() {
         <Route path="/admin/leituras" element={<AdminGuard><AdminReads /></AdminGuard>} />
         <Route path="/admin/sugestoes" element={<AdminGuard><AdminSuggestions /></AdminGuard>} />
         <Route path="/admin/avaliacoes" element={<AdminGuard><AdminReviews /></AdminGuard>} />
-        <Route path="/admin/automacoes" element={<AdminGuard><AdminAutomations /></AdminGuard>} />
+        <Route path="/admin/automacoes" element={<SuperAdminGuard><AdminAutomations /></SuperAdminGuard>} />
         <Route path="/admin/configuracoes" element={<AdminGuard><AdminSettings /></AdminGuard>} />
         <Route path="/admin/updates" element={<AdminGuard><AdminUpdates /></AdminGuard>} />
         <Route path="*" element={<Navigate to="/" replace />} />

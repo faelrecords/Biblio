@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.24',
+    date: '2026-08-03',
+    title: 'Bitrix e automações restritos',
+    summary: 'Recursos sensíveis agora são exclusivos do super admin.',
+    items: [
+      'Somente o super admin pode encaminhar avisos exclusivos ao Bitrix24.',
+      'Administradores comuns continuam enviando notificações somente dentro do Biblio.',
+      'A aba Automações e suas configurações agora aparecem somente para o super admin.'
+    ]
+  },
+  {
     version: 'v1.6.23',
     date: '2026-08-03',
     title: 'Correção no reajuste de prazo',

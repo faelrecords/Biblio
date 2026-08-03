@@ -69,7 +69,7 @@ export default function AdminUsers() {
 
   function openNotice(user) {
     setNoticeUser(user);
-    setNotice({ message: '', send_bitrix: true });
+    setNotice({ message: '', send_bitrix: !!me?.is_super });
     setNoticeErr('');
     setNoticeResult(null);
   }
@@ -81,7 +81,7 @@ export default function AdminUsers() {
       const result = await api.post('/notifications/send-user', {
         user_id: noticeUser.id,
         message: notice.message,
-        send_bitrix: notice.send_bitrix
+        send_bitrix: !!me?.is_super && notice.send_bitrix
       });
       const bitrix = result.bitrix_delivery;
       if (bitrix?.status === 'sent') {
@@ -316,22 +316,24 @@ export default function AdminUsers() {
                   placeholder="Digite a mensagem..."
                 />
               </div>
-              <div className="field">
-                <div className="automation-option-row">
-                  <div>
-                    <label style={{ margin: 0 }}>Enviar no Bitrix?</label>
-                    <div className="hint">{notice.send_bitrix ? 'Sim — Biblio + Bitrix' : 'Não — somente Biblio'}</div>
+              {me?.is_super && (
+                <div className="field">
+                  <div className="automation-option-row">
+                    <div>
+                      <label style={{ margin: 0 }}>Enviar no Bitrix?</label>
+                      <div className="hint">{notice.send_bitrix ? 'Sim — Biblio + Bitrix' : 'Não — somente Biblio'}</div>
+                    </div>
+                    <label className="toggle-switch" title={notice.send_bitrix ? 'Desativar envio no Bitrix' : 'Ativar envio no Bitrix'}>
+                      <input
+                        type="checkbox"
+                        checked={notice.send_bitrix}
+                        onChange={e => setNotice({ ...notice, send_bitrix: e.target.checked })}
+                      />
+                      <span className="track"></span>
+                    </label>
                   </div>
-                  <label className="toggle-switch" title={notice.send_bitrix ? 'Desativar envio no Bitrix' : 'Ativar envio no Bitrix'}>
-                    <input
-                      type="checkbox"
-                      checked={notice.send_bitrix}
-                      onChange={e => setNotice({ ...notice, send_bitrix: e.target.checked })}
-                    />
-                    <span className="track"></span>
-                  </label>
                 </div>
-              </div>
+              )}
               <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
                 <button className="btn ghost" onClick={() => setNoticeUser(null)}>Cancelar</button>
                 <button className="btn accent" onClick={sendNotice} disabled={noticeLoading || !notice.message.trim()}>
