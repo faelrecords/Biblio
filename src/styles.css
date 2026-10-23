@@ -323,11 +323,19 @@ label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec
   display: flex;
   align-items: center;
   gap: 4px;
+  width: fit-content;
   min-height: 18px;
   margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
   white-space: nowrap;
 }
 .book-card-rating > div { gap: 1px !important; }
+.book-card-rating svg { display: block; }
+.book-card-rating:hover .book-card-rating-count { text-decoration: underline; }
 .book-card-rating-average {
   color: var(--text-primary);
   font-size: 11px;
@@ -346,6 +354,35 @@ label { display: block; font-size: 12px; font-weight: 500; color: var(--text-sec
   -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
 }
 .book-author { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+.reviews-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 22px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.reviews-summary strong { color: var(--text-primary); font-size: 18px; }
+.catalog-review {
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+.catalog-review-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.catalog-review-head span { color: var(--text-tertiary); }
+.catalog-review p {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
 
 /* MODAL */
 .modal-backdrop {

@@ -1146,6 +1146,27 @@ async function handle(req: Request) {
     if (!data) throw new HttpError(500, 'livro não foi criado');
     return json(req, { id: data.id });
   }
+  const bookReviewsId = path.match(/^\/books\/(\d+)\/reviews$/)?.[1];
+  if (bookReviewsId && method === 'GET') {
+    const book = await findBook(bookReviewsId);
+    if (!book) throw new HttpError(404, 'não encontrado');
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('id,rating,comment,created_at,app_users(name)')
+      .eq('book_id', bookReviewsId)
+      .order('created_at', { ascending: false });
+    dbError(error);
+    return json(req, (data || []).map(item => {
+      const linkedUser = Array.isArray(item.app_users) ? item.app_users[0] : item.app_users;
+      return {
+        id: item.id,
+        rating: item.rating,
+        comment: item.comment || '',
+        created_at: item.created_at,
+        user_name: linkedUser?.name || 'Usuário'
+      };
+    }));
+  }
   const bookId = path.match(/^\/books\/(\d+)$/)?.[1];
   if (bookId && method === 'GET') {
     const book = await findBook(bookId);

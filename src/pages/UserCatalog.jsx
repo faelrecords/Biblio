@@ -48,6 +48,7 @@ export default function UserCatalog({ anonymous = false }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [reviewsBook, setReviewsBook] = useState(null);
   const [topReaders, setTopReaders] = useState([]);
   const [search, setSearch] = useState('');
   const [suggestionOpen, setSuggestionOpen] = useState(false);
@@ -180,13 +181,19 @@ export default function UserCatalog({ anonymous = false }) {
           </div>
           <div className="row-scroll">
             {items.map(b => (
-              <BookCard key={b.id} book={b} onClick={() => setSelected(b)} />
+              <BookCard
+                key={b.id}
+                book={b}
+                onClick={() => setSelected(b)}
+                onReviews={() => setReviewsBook(b)}
+              />
             ))}
           </div>
         </div>
       ))}
 
       {selected && <BookModal book={selected} profile={profile} anonymous={isAnonymous} onClose={() => setSelected(null)} onUpdate={load} />}
+      {reviewsBook && <ReviewsModal book={reviewsBook} onClose={() => setReviewsBook(null)} />}
 
       {suggestionOpen && (
         <div className="modal-backdrop">
@@ -226,24 +233,29 @@ export default function UserCatalog({ anonymous = false }) {
 function Stars({ value = 0, onChange, size = 24 }) {
   return (
     <div style={{ display: 'flex', gap: 4 }}>
-      {[1, 2, 3, 4, 5].map(star => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange?.(star)}
-          style={{ background: 'transparent', border: 0, padding: 0, cursor: onChange ? 'pointer' : 'default' }}
-          aria-label={`${star} estrelas`}
-        >
+      {[1, 2, 3, 4, 5].map(star => {
+        const icon = (
           <svg width={size} height={size} viewBox="0 0 24 24" fill={star <= value ? '#f5c25b' : 'none'} stroke={star <= value ? '#f5c25b' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-        </button>
-      ))}
+        );
+        return onChange ? (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            style={{ background: 'transparent', border: 0, padding: 0, cursor: 'pointer' }}
+            aria-label={`${star} estrelas`}
+          >
+            {icon}
+          </button>
+        ) : <span key={star} aria-hidden="true">{icon}</span>;
+      })}
     </div>
   );
 }
 
-function BookCard({ book, onClick }) {
+function BookCard({ book, onClick, onReviews }) {
   const cls = book.status === 'borrowed' ? 'unavailable' : book.status === 'pending' ? 'pending-status' : '';
   return (
     <div className={`book-card ${cls}`} onClick={onClick}>
@@ -264,13 +276,63 @@ function BookCard({ book, onClick }) {
           }}>{book.waitlist_count} na fila</span>
         )}
       </div>
-      <div className="book-card-rating" aria-label={`${Number(book.rating_avg || 0).toFixed(1)} de 5 estrelas, ${book.rating_count || 0} avaliações`}>
+      <button
+        type="button"
+        className="book-card-rating"
+        aria-label={`Abrir ${book.rating_count || 0} avaliações de ${book.title}`}
+        onClick={event => {
+          event.stopPropagation();
+          onReviews();
+        }}
+      >
         <span className="book-card-rating-average">{Number(book.rating_avg || 0).toFixed(1)}</span>
         <Stars value={Math.round(book.rating_avg || 0)} size={13} />
-        <span className="book-card-rating-count">{book.rating_count || 0}</span>
-      </div>
+        <span className="book-card-rating-count">{book.rating_count || 0} avaliações</span>
+      </button>
       <div className="book-title">{book.title}</div>
       <div className="book-author">{book.author}</div>
+    </div>
+  );
+}
+
+function ReviewsModal({ book, onClose }) {
+  const [items, setItems] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    api.get(`/books/${book.id}/reviews`)
+      .then(data => { if (active) setItems(data); })
+      .catch(err => { if (active) setError(err.message); });
+    return () => { active = false; };
+  }, [book.id]);
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal glass glass-strong" onClick={event => event.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        <div className="subtitle">Avaliações</div>
+        <h2>{book.title}</h2>
+        <div className="reviews-summary">
+          <strong>{Number(book.rating_avg || 0).toFixed(1)}</strong>
+          <Stars value={Math.round(book.rating_avg || 0)} size={20} />
+          <span>{book.rating_count || 0} avaliações</span>
+        </div>
+
+        {error && <div className="error-msg">{error}</div>}
+        {!items && !error && <div className="spinner" />}
+        {items?.length === 0 && <div className="empty-state">Este livro ainda não possui avaliações.</div>}
+        {items?.map(item => (
+          <div className="catalog-review" key={item.id}>
+            <div className="catalog-review-head">
+              <strong>{item.user_name}</strong>
+              <span>{new Date(item.created_at).toLocaleDateString('pt-BR')}</span>
+            </div>
+            <Stars value={item.rating} size={16} />
+            {item.comment && <p>{item.comment}</p>}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

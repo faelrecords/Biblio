@@ -1,5 +1,15 @@
 export const updates = [
   {
+    version: 'v1.6.26',
+    date: '2026-10-23',
+    title: 'Avaliações acessíveis pelo acervo',
+    summary: 'O resumo de avaliações agora aparece em todos os livros e abre os comentários.',
+    items: [
+      'Todos os livros exibem cinco estrelas, média e quantidade de avaliações, inclusive quando o total é zero.',
+      'Ao clicar nas avaliações, o leitor pode consultar as notas e os comentários daquele livro.'
+    ]
+  },
+  {
     version: 'v1.6.25',
     date: '2026-10-23',
     title: 'Avaliações visíveis no acervo',
