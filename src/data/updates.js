@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.27',
+    date: '2026-10-23',
+    title: 'Controle administrativo das leituras',
+    summary: 'Avaliações podem permanecer publicadas sem contar no placar de leitores.',
+    items: [
+      'Na aba Avaliações, administradores podem remover ou incluir individualmente uma leitura no placar.',
+      'A nota e o comentário continuam visíveis mesmo quando a leitura não é contabilizada.',
+      'A alteração atualiza imediatamente o total do colaborador e o ranking de leitores.'
+    ]
+  },
+  {
     version: 'v1.6.26',
     date: '2026-10-23',
     title: 'Avaliações acessíveis pelo acervo',

@@ -697,14 +697,14 @@ async function isUserInWaitlist(bookId: number, userId: number) {
 }
 
 async function readStats(start: string | null, end: string | null) {
-  let query = supabase.from('reviews').select('user_id,comment,created_at');
+  let query = supabase.from('reviews').select('user_id,comment,created_at,counts_as_read');
   if (start) query = query.gte('created_at', start);
   if (end) query = query.lte('created_at', end);
   const { data, error } = await query;
   dbError(error);
   const counts = new Map<number, number>();
   for (const review of data || []) {
-    if (!String(review.comment || '').trim()) continue;
+    if (!String(review.comment || '').trim() || review.counts_as_read === false) continue;
     counts.set(review.user_id, (counts.get(review.user_id) || 0) + 1);
   }
   const result = [];
@@ -738,10 +738,12 @@ async function recalcBooksRead(userId: string | number | null | undefined) {
   if (!userId) return;
   const { data, error } = await supabase
     .from('reviews')
-    .select('comment')
+    .select('comment,counts_as_read')
     .eq('user_id', userId);
   dbError(error);
-  const count = (data || []).filter(review => String(review.comment || '').trim()).length;
+  const count = (data || []).filter(review => (
+    String(review.comment || '').trim() && review.counts_as_read !== false
+  )).length;
   const { error: updateError } = await supabase
     .from('app_users')
     .update({ books_read: count })
@@ -1240,11 +1242,11 @@ async function handle(req: Request) {
     dbError(error);
     const { data: reads, error: readsError } = await supabase
       .from('reviews')
-      .select('user_id,comment');
+      .select('user_id,comment,counts_as_read');
     dbError(readsError);
     const counts = new Map<number, number>();
     for (const read of reads || []) {
-      if (!String(read.comment || '').trim()) continue;
+      if (!String(read.comment || '').trim() || read.counts_as_read === false) continue;
       counts.set(read.user_id, (counts.get(read.user_id) || 0) + 1);
     }
     return json(req, (data || []).map(user => ({
@@ -1502,7 +1504,8 @@ async function handle(req: Request) {
         book_id: loan.book_id,
         user_id: user.id,
         rating,
-        comment: String(input.review || '').trim()
+        comment: String(input.review || '').trim(),
+        counts_as_read: true
       }, { onConflict: 'loan_id' });
       dbError(reviewError);
     }
@@ -1700,10 +1703,39 @@ async function handle(req: Request) {
     })));
   }
   const reviewId = path.match(/^\/reviews\/(\d+)$/)?.[1];
+  if (reviewId && method === 'PUT') {
+    await requireAdmin(req);
+    const input = await body(req);
+    if (typeof input.counts_as_read !== 'boolean') throw new HttpError(400, 'situação da leitura obrigatória');
+    const { data: review, error: findError } = await supabase
+      .from('reviews')
+      .select('id,user_id,comment')
+      .eq('id', reviewId)
+      .maybeSingle();
+    dbError(findError);
+    if (!review) throw new HttpError(404, 'avaliação não encontrada');
+    if (input.counts_as_read && !String(review.comment || '').trim()) {
+      throw new HttpError(400, 'uma leitura sem resumo não pode ser contabilizada');
+    }
+    const { error } = await supabase
+      .from('reviews')
+      .update({ counts_as_read: input.counts_as_read })
+      .eq('id', reviewId);
+    dbError(error);
+    await recalcBooksRead(review.user_id);
+    return json(req, { ok: true, counts_as_read: input.counts_as_read });
+  }
   if (reviewId && method === 'DELETE') {
     await requireAdmin(req);
+    const { data: review, error: findError } = await supabase
+      .from('reviews')
+      .select('user_id')
+      .eq('id', reviewId)
+      .maybeSingle();
+    dbError(findError);
     const { error } = await supabase.from('reviews').delete().eq('id', reviewId);
     dbError(error);
+    if (review?.user_id) await recalcBooksRead(review.user_id);
     return json(req, { ok: true });
   }
 

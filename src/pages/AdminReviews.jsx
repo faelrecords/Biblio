@@ -15,6 +15,8 @@ function Stars({ value }) {
 
 export default function AdminReviews() {
   const [items, setItems] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+  const [error, setError] = useState('');
 
   const load = () => api.get('/reviews').then(setItems);
 
@@ -24,8 +26,26 @@ export default function AdminReviews() {
 
   async function remove(id) {
     if (!confirm('Excluir avaliação?')) return;
-    await api.del(`/reviews/${id}`);
-    load();
+    setError('');
+    try {
+      await api.del(`/reviews/${id}`);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function toggleReadCount(item) {
+    setBusyId(item.id);
+    setError('');
+    try {
+      await api.put(`/reviews/${item.id}`, { counts_as_read: !item.counts_as_read });
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyId(null);
+    }
   }
 
   if (!items) return <div className="container"><div className="spinner" /></div>;
@@ -34,6 +54,7 @@ export default function AdminReviews() {
     <div className="container">
       <div className="subtitle">Leituras</div>
       <h1 style={{ marginBottom: 24 }}>Avaliações</h1>
+      {error && <div className="error-msg">{error}</div>}
       <div className="glass list-card">
         {items.length === 0 && <div className="empty-state">Nenhuma avaliação enviada.</div>}
         {items.map(item => (
@@ -48,8 +69,20 @@ export default function AdminReviews() {
               </div>
               <div style={{ marginTop: 8 }}><Stars value={item.rating} /></div>
               {item.comment && <p style={{ marginTop: 10, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.comment}</p>}
+              <div style={{ marginTop: 10 }}>
+                <span className={`badge ${item.counts_as_read && item.comment?.trim() ? 'approved' : 'pending'}`}>
+                  {item.counts_as_read && item.comment?.trim() ? 'Conta como leitura' : 'Não conta como leitura'}
+                </span>
+              </div>
             </div>
-            <button className="btn sm danger" onClick={() => remove(item.id)}>Excluir</button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {item.comment?.trim() && (
+                <button className="btn sm ghost" disabled={busyId === item.id} onClick={() => toggleReadCount(item)}>
+                  {item.counts_as_read ? 'Remover do placar' : 'Incluir no placar'}
+                </button>
+              )}
+              <button className="btn sm danger" disabled={busyId === item.id} onClick={() => remove(item.id)}>Excluir</button>
+            </div>
           </div>
         ))}
       </div>
