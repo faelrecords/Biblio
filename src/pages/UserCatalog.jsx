@@ -223,7 +223,7 @@ export default function UserCatalog({ anonymous = false }) {
   );
 }
 
-function Stars({ value = 0, onChange }) {
+function Stars({ value = 0, onChange, size = 24 }) {
   return (
     <div style={{ display: 'flex', gap: 4 }}>
       {[1, 2, 3, 4, 5].map(star => (
@@ -234,7 +234,7 @@ function Stars({ value = 0, onChange }) {
           style={{ background: 'transparent', border: 0, padding: 0, cursor: onChange ? 'pointer' : 'default' }}
           aria-label={`${star} estrelas`}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill={star <= value ? '#f5c25b' : 'none'} stroke={star <= value ? '#f5c25b' : '#fff'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width={size} height={size} viewBox="0 0 24 24" fill={star <= value ? '#f5c25b' : 'none'} stroke={star <= value ? '#f5c25b' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
         </button>
@@ -263,6 +263,11 @@ function BookCard({ book, onClick }) {
             top: 'auto', bottom: 10, color: 'var(--accent-text)'
           }}>{book.waitlist_count} na fila</span>
         )}
+      </div>
+      <div className="book-card-rating" aria-label={`${Number(book.rating_avg || 0).toFixed(1)} de 5 estrelas, ${book.rating_count || 0} avaliações`}>
+        <span className="book-card-rating-average">{Number(book.rating_avg || 0).toFixed(1)}</span>
+        <Stars value={Math.round(book.rating_avg || 0)} size={13} />
+        <span className="book-card-rating-count">{book.rating_count || 0}</span>
       </div>
       <div className="book-title">{book.title}</div>
       <div className="book-author">{book.author}</div>

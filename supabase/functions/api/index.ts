@@ -697,13 +697,16 @@ async function isUserInWaitlist(bookId: number, userId: number) {
 }
 
 async function readStats(start: string | null, end: string | null) {
-  let query = supabase.from('loans').select('*').eq('status', 'returned').not('returned_at', 'is', null);
-  if (start) query = query.gte('returned_at', start);
-  if (end) query = query.lte('returned_at', end);
+  let query = supabase.from('reviews').select('user_id,comment,created_at');
+  if (start) query = query.gte('created_at', start);
+  if (end) query = query.lte('created_at', end);
   const { data, error } = await query;
   dbError(error);
   const counts = new Map<number, number>();
-  for (const loan of data || []) counts.set(loan.user_id, (counts.get(loan.user_id) || 0) + 1);
+  for (const review of data || []) {
+    if (!String(review.comment || '').trim()) continue;
+    counts.set(review.user_id, (counts.get(review.user_id) || 0) + 1);
+  }
   const result = [];
   for (const [userId, count] of counts) {
     const user = await findUser(userId);
@@ -733,16 +736,15 @@ async function readEntries(start: string | null, end: string | null) {
 
 async function recalcBooksRead(userId: string | number | null | undefined) {
   if (!userId) return;
-  const { count, error } = await supabase
-    .from('loans')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('status', 'returned')
-    .not('returned_at', 'is', null);
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('comment')
+    .eq('user_id', userId);
   dbError(error);
+  const count = (data || []).filter(review => String(review.comment || '').trim()).length;
   const { error: updateError } = await supabase
     .from('app_users')
-    .update({ books_read: count || 0 })
+    .update({ books_read: count })
     .eq('id', userId);
   dbError(updateError);
 }
@@ -1216,13 +1218,14 @@ async function handle(req: Request) {
       .order('name');
     dbError(error);
     const { data: reads, error: readsError } = await supabase
-      .from('loans')
-      .select('user_id')
-      .eq('status', 'returned')
-      .not('returned_at', 'is', null);
+      .from('reviews')
+      .select('user_id,comment');
     dbError(readsError);
     const counts = new Map<number, number>();
-    for (const read of reads || []) counts.set(read.user_id, (counts.get(read.user_id) || 0) + 1);
+    for (const read of reads || []) {
+      if (!String(read.comment || '').trim()) continue;
+      counts.set(read.user_id, (counts.get(read.user_id) || 0) + 1);
+    }
     return json(req, (data || []).map(user => ({
       ...user,
       books_read: counts.get(user.id) || 0
@@ -1413,8 +1416,7 @@ async function handle(req: Request) {
       returned_at: new Date().toISOString(),
       returned_by: auth.id
     });
-    const user = await findUser(loan.user_id);
-    await supabase.from('app_users').update({ books_read: (user?.books_read || 0) + 1 }).eq('id', loan.user_id);
+    await recalcBooksRead(loan.user_id);
     const queue = await waitlistForBook(loan.book_id);
     if (queue.length > 0) {
       const [book, settings] = await Promise.all([findBook(loan.book_id), getSettings()]);
@@ -1483,7 +1485,7 @@ async function handle(req: Request) {
       }, { onConflict: 'loan_id' });
       dbError(reviewError);
     }
-    await supabase.from('app_users').update({ books_read: (user.books_read || 0) + 1 }).eq('id', user.id);
+    await recalcBooksRead(user.id);
     const queue = await waitlistForBook(loan.book_id);
     if (queue.length > 0 && book) {
       const settings = await getSettings();

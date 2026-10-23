@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.25',
+    date: '2026-10-23',
+    title: 'Avaliações visíveis no acervo',
+    summary: 'Notas dos livros e leituras contabilizadas com mais contexto.',
+    items: [
+      'Média, estrelas e quantidade de avaliações aparecem diretamente abaixo de cada capa, no estilo de lojas de livros.',
+      'A nota em estrelas continua obrigatória na devolução e o comentário permanece opcional.',
+      'Uma leitura só entra no total e no ranking quando a avaliação também possui um resumo ou opinião.'
+    ]
+  },
+  {
     version: 'v1.6.24',
     date: '2026-08-03',
     title: 'Bitrix e automações restritos',
