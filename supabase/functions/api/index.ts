@@ -213,6 +213,7 @@ async function auditSuccessfulAdminMutation(req: Request, response: Response, in
   if (!['POST', 'PUT', 'DELETE'].includes(req.method) || response.status >= 400) return;
   const path = requestPath(req);
   if (path.startsWith('/auth/') || path.startsWith('/setup/')) return;
+  if (path === '/me/audit-log' || path.startsWith('/audit-logs')) return;
   const header = req.headers.get('authorization') || '';
   const token = header.replace(/^Bearer\s+/i, '');
   if (!token) return;
@@ -225,8 +226,7 @@ async function auditSuccessfulAdminMutation(req: Request, response: Response, in
   if (!payload.is_admin || !payload.id) return;
   const admin = await findUser(payload.id as number);
   if (!admin?.is_admin) return;
-  const isAuditPreference = path === '/me/audit-log';
-  if (admin.is_super && admin.audit_log_enabled === false && !isAuditPreference) return;
+  if (admin.is_super && admin.audit_log_enabled === false) return;
   const { error } = await supabase.from('audit_logs').insert({
     admin_id: admin.id,
     admin_name: admin.name || payload.name || 'Administrador',
@@ -1850,6 +1850,14 @@ async function handle(req: Request) {
       .limit(limit);
     dbError(error);
     return json(req, data || []);
+  }
+
+  const auditLogId = path.match(/^\/audit-logs\/(\d+)$/)?.[1];
+  if (auditLogId && method === 'DELETE') {
+    await requireSuperAdmin(req);
+    const { error } = await supabase.from('audit_logs').delete().eq('id', auditLogId);
+    dbError(error);
+    return json(req, { ok: true });
   }
 
   const reviewId = path.match(/^\/reviews\/(\d+)$/)?.[1];

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../api';
+import { api, getProfile } from '../api';
 
 function formatDetails(details) {
   const entries = Object.entries(details || {}).filter(([, value]) => (
@@ -13,9 +13,11 @@ function formatDetails(details) {
 }
 
 export default function AdminLog() {
+  const profile = getProfile();
   const [items, setItems] = useState(null);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState(null);
 
   useEffect(() => {
     api.get('/audit-logs?limit=500').then(setItems).catch(err => setError(err.message));
@@ -28,6 +30,20 @@ export default function AdminLog() {
       `${item.admin_name} ${item.action} ${item.path} ${formatDetails(item.details)}`.toLowerCase().includes(query)
     ));
   }, [items, search]);
+
+  async function remove(item) {
+    if (!confirm(`Excluir este registro do Log?\n\n${item.action}`)) return;
+    setBusyId(item.id);
+    setError('');
+    try {
+      await api.del(`/audit-logs/${item.id}`);
+      setItems(current => current.filter(entry => entry.id !== item.id));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   if (!items && !error) return <div className="container"><div className="spinner" /></div>;
 
@@ -64,7 +80,14 @@ export default function AdminLog() {
                 </div>
                 {details && <div className="audit-log-details">{details}</div>}
               </div>
-              <span className="badge pending">{item.method}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <span className="badge pending">{item.method}</span>
+                {profile?.is_super && (
+                  <button className="btn sm danger" disabled={busyId === item.id} onClick={() => remove(item)}>
+                    Excluir
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
@@ -72,4 +95,3 @@ export default function AdminLog() {
     </div>
   );
 }
-

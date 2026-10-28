@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.30',
+    date: '2026-10-28',
+    title: 'Controle e recuperação do Log',
+    summary: 'O histórico administrativo recebeu controles adicionais e registros recuperáveis.',
+    items: [
+      'Somente o super administrador pode excluir registros da aba Log.',
+      'A alteração da preferência pessoal de registro não gera uma entrada no Log.',
+      'Ações antigas identificáveis de Camila e Yasmin foram recuperadas a partir do histórico do sistema.'
+    ]
+  },
+  {
     version: 'v1.6.29',
     date: '2026-10-28',
     title: 'Acesso simplificado ao perfil',
