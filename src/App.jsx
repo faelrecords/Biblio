@@ -177,7 +177,7 @@ function Navbar({ variant, onSecretTitleClick }) {
   if (variant === 'catalog') {
     return (
       <nav className="navbar catalog-navbar glass">
-        {isUser() && <Link to="/perfil" className={`nav-link catalog-profile-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>Perfil</Link>}
+        {isUser() && <Link to="/perfil" className={`nav-link catalog-profile-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>{profile?.name || 'Minha conta'}</Link>}
         <Link to="/" className="nav-brand" onClick={clickSecretTitle}>{brand}</Link>
         {isUser() && <NotificationBell reader />}
       </nav>
@@ -225,11 +225,12 @@ function Navbar({ variant, onSecretTitleClick }) {
           <Link onClick={closeAdminMenu} to="/admin/configuracoes" className={`nav-link ${loc.pathname === '/admin/configuracoes' ? 'active' : ''}`}>Configurações</Link>
           <Link onClick={closeAdminMenu} to="/admin/log" className={`nav-link ${loc.pathname === '/admin/log' ? 'active' : ''}`}>Log</Link>
           <Link onClick={closeAdminMenu} to="/admin/updates" className={`nav-link ${loc.pathname === '/admin/updates' ? 'active' : ''}`}>Updates</Link>
-          <Link onClick={closeAdminMenu} to="/perfil" className={`nav-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>Perfil</Link>
           <div className="nav-notifications-desktop">
             <NotificationBell />
           </div>
-          <span className="nav-user">{profile?.name || profile?.username}</span>
+          <Link onClick={closeAdminMenu} to="/perfil" className={`nav-user nav-user-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>
+            {profile?.name || profile?.username}
+          </Link>
           <button className="btn sm ghost" onClick={logout}>Sair</button>
         </div>
       </nav>

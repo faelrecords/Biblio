@@ -1,11 +1,21 @@
 export const updates = [
   {
+    version: 'v1.6.29',
+    date: '2026-10-28',
+    title: 'Acesso simplificado ao perfil',
+    summary: 'O perfil pessoal agora é acessado diretamente pelo nome do usuário.',
+    items: [
+      'Removida a aba Perfil do menu administrativo.',
+      'Ao clicar no próprio nome, administradores e leitores acessam as configurações da conta.'
+    ]
+  },
+  {
     version: 'v1.6.28',
     date: '2026-10-28',
     title: 'Perfis e histórico administrativo',
     summary: 'Mais autonomia para os usuários e rastreabilidade das alterações administrativas.',
     items: [
-      'Nova aba Perfil para alterar foto, senha e dados opcionais da conta.',
+      'Novo perfil pessoal para alterar foto, senha e dados opcionais da conta.',
       'Nova aba Log, exclusiva para administradores, com data, horário, responsável e ação realizada.',
       'Removida a identificação visual desnecessária das avaliações que não entram no placar.'
     ]
