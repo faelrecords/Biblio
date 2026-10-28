@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.28',
+    date: '2026-10-28',
+    title: 'Perfis e histórico administrativo',
+    summary: 'Mais autonomia para os usuários e rastreabilidade das alterações administrativas.',
+    items: [
+      'Nova aba Perfil para alterar foto, senha e dados opcionais da conta.',
+      'Nova aba Log, exclusiva para administradores, com data, horário, responsável e ação realizada.',
+      'Removida a identificação visual desnecessária das avaliações que não entram no placar.'
+    ]
+  },
+  {
     version: 'v1.6.27',
     date: '2026-10-23',
     title: 'Controle administrativo das leituras',

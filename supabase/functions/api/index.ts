@@ -161,6 +161,83 @@ function publicUser(user: Record<string, unknown>) {
   return rest;
 }
 
+function requestPath(req: Request) {
+  const url = new URL(req.url);
+  const marker = '/api';
+  const index = url.pathname.indexOf(marker);
+  return index >= 0 ? (url.pathname.slice(index + marker.length) || '/') : url.pathname;
+}
+
+function sanitizeAuditDetails(value: unknown, key = ''): unknown {
+  if (/password|token|secret|access_code|webhook|data|avatar_url/i.test(key)) return '[oculto]';
+  if (Array.isArray(value)) return value.slice(0, 20).map(item => sanitizeAuditDetails(item));
+  if (value && typeof value === 'object') {
+    const clean: Record<string, unknown> = {};
+    for (const [entryKey, entryValue] of Object.entries(value as Record<string, unknown>)) {
+      clean[entryKey] = sanitizeAuditDetails(entryValue, entryKey);
+    }
+    return clean;
+  }
+  if (typeof value === 'string' && value.length > 300) return `${value.slice(0, 300)}…`;
+  return value;
+}
+
+function auditAction(method: string, path: string, input: Record<string, unknown>) {
+  if (path === '/settings') return 'Atualizou as configurações';
+  if (path === '/upload') return 'Enviou uma imagem';
+  if (path === '/me/avatar') return 'Alterou a própria foto';
+  if (path === '/me/profile') return 'Atualizou o próprio perfil';
+  if (path === '/me/password') return 'Alterou a própria senha';
+  if (path === '/me/audit-log') return input.enabled === false ? 'Desativou o próprio registro no Log' : 'Ativou o próprio registro no Log';
+  if (path === '/books' && method === 'POST') return `Cadastrou o livro ${String(input.title || '').trim() || ''}`.trim();
+  if (/^\/books\/\d+$/.test(path) && method === 'PUT') return `Atualizou o livro ${path.split('/').pop()}`;
+  if (/^\/books\/\d+$/.test(path) && method === 'DELETE') return `Excluiu o livro ${path.split('/').pop()}`;
+  if (path === '/users' && method === 'POST') return `Cadastrou o usuário ${String(input.name || '').trim() || ''}`.trim();
+  if (/^\/users\/\d+$/.test(path) && method === 'PUT') return `Atualizou o usuário ${path.split('/').pop()}`;
+  if (/^\/users\/\d+$/.test(path) && method === 'DELETE') return `Excluiu o usuário ${path.split('/').pop()}`;
+  if (/^\/loans\/\d+\/approve$/.test(path)) return `Aprovou o empréstimo ${path.split('/')[2]}`;
+  if (/^\/loans\/\d+\/reject$/.test(path)) return `Recusou o empréstimo ${path.split('/')[2]}`;
+  if (/^\/loans\/\d+\/return$/.test(path)) return `Registrou a devolução do empréstimo ${path.split('/')[2]}`;
+  if (/^\/loans\/\d+\/adjust-days$/.test(path)) return `Reajustou os dias do empréstimo ${path.split('/')[2]}`;
+  if (/^\/reviews\/\d+$/.test(path) && method === 'PUT') return input.counts_as_read === false ? 'Removeu uma leitura do placar' : 'Incluiu uma leitura no placar';
+  if (/^\/reviews\/\d+$/.test(path) && method === 'DELETE') return `Excluiu a avaliação ${path.split('/').pop()}`;
+  if (path === '/notifications/send-user') return 'Enviou um aviso exclusivo';
+  if (path === '/notifications/cleanup') return 'Limpou notificações';
+  if (/^\/automations\/\d+$/.test(path) && method === 'PUT') return `Atualizou a automação ${path.split('/').pop()}`;
+  if (path.startsWith('/waitlist/')) return 'Alterou a fila de espera';
+  if (path.startsWith('/suggestions/')) return 'Excluiu uma sugestão';
+  return `${method} ${path}`;
+}
+
+async function auditSuccessfulAdminMutation(req: Request, response: Response, input: Record<string, unknown>) {
+  if (!['POST', 'PUT', 'DELETE'].includes(req.method) || response.status >= 400) return;
+  const path = requestPath(req);
+  if (path.startsWith('/auth/') || path.startsWith('/setup/')) return;
+  const header = req.headers.get('authorization') || '';
+  const token = header.replace(/^Bearer\s+/i, '');
+  if (!token) return;
+  let payload: Record<string, unknown>;
+  try {
+    payload = await verifyJwt(token);
+  } catch {
+    return;
+  }
+  if (!payload.is_admin || !payload.id) return;
+  const admin = await findUser(payload.id as number);
+  if (!admin?.is_admin) return;
+  const isAuditPreference = path === '/me/audit-log';
+  if (admin.is_super && admin.audit_log_enabled === false && !isAuditPreference) return;
+  const { error } = await supabase.from('audit_logs').insert({
+    admin_id: admin.id,
+    admin_name: admin.name || payload.name || 'Administrador',
+    action: auditAction(req.method, path, input),
+    method: req.method,
+    path,
+    details: sanitizeAuditDetails(input)
+  });
+  if (error) console.error('audit log error', error.message);
+}
+
 async function userSession(user: Record<string, unknown>) {
   await supabase
     .from('app_users')
@@ -1198,6 +1275,65 @@ async function handle(req: Request) {
     return await uploadImage(req);
   }
 
+  if (method === 'GET' && path === '/me/profile') {
+    const auth = await requireReader(req);
+    const user = await findUser(auth.id as number);
+    if (!user) throw new HttpError(404, 'usuário não existe');
+    return json(req, publicUser(user));
+  }
+
+  if (method === 'PUT' && path === '/me/profile') {
+    const auth = await requireReader(req);
+    const input = await body(req);
+    const cleanText = (value: unknown, max: number) => String(value || '').trim().slice(0, max);
+    const patch = {
+      email: cleanText(input.email, 180),
+      phone: cleanText(input.phone, 40),
+      department: cleanText(input.department, 100),
+      job_title: cleanText(input.job_title, 100),
+      bio: cleanText(input.bio, 800),
+      avatar_url: cleanText(input.avatar_url, 1000)
+    };
+    const { data, error } = await supabase
+      .from('app_users')
+      .update(patch)
+      .eq('id', auth.id)
+      .select('*')
+      .single();
+    dbError(error);
+    return json(req, publicUser(data));
+  }
+
+  if (method === 'PUT' && path === '/me/password') {
+    const auth = await requireReader(req);
+    const input = await body(req);
+    const currentPassword = String(input.current_password || '');
+    const newPassword = String(input.new_password || '');
+    if (newPassword.length < 4) throw new HttpError(400, 'a nova senha deve ter pelo menos 4 caracteres');
+    const user = await findUser(auth.id as number);
+    if (!user?.password_hash || !await verifyPassword(currentPassword, user.password_hash)) {
+      throw new HttpError(401, 'senha atual incorreta');
+    }
+    const password_hash = await hashPassword(newPassword);
+    const { error } = await supabase.from('app_users').update({ password_hash }).eq('id', auth.id);
+    dbError(error);
+    return json(req, { ok: true });
+  }
+
+  if (method === 'PUT' && path === '/me/audit-log') {
+    const auth = await requireSuperAdmin(req);
+    const input = await body(req);
+    if (typeof input.enabled !== 'boolean') throw new HttpError(400, 'preferência inválida');
+    const { data, error } = await supabase
+      .from('app_users')
+      .update({ audit_log_enabled: input.enabled })
+      .eq('id', auth.id)
+      .select('*')
+      .single();
+    dbError(error);
+    return json(req, publicUser(data));
+  }
+
   if (method === 'POST' && path === '/me/avatar') {
     const auth = await requireReader(req);
     const input = await body(req);
@@ -1702,6 +1838,20 @@ async function handle(req: Request) {
       cover_url: item.books?.cover_url || ''
     })));
   }
+
+  if (method === 'GET' && path === '/audit-logs') {
+    await requireAdmin(req);
+    const requestedLimit = Number(url.searchParams.get('limit') || 200);
+    const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 200, 1), 500);
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    dbError(error);
+    return json(req, data || []);
+  }
+
   const reviewId = path.match(/^\/reviews\/(\d+)$/)?.[1];
   if (reviewId && method === 'PUT') {
     await requireAdmin(req);
@@ -1935,8 +2085,18 @@ async function handle(req: Request) {
 }
 
 Deno.serve(async req => {
+  const auditRequest = req.clone();
   try {
-    return await handle(req);
+    const response = await handle(req);
+    try {
+      const input = ['POST', 'PUT', 'DELETE'].includes(auditRequest.method)
+        ? await auditRequest.json().catch(() => ({}))
+        : {};
+      await auditSuccessfulAdminMutation(auditRequest, response, input as Record<string, unknown>);
+    } catch (auditError) {
+      console.error('audit log failure', auditError);
+    }
+    return response;
   } catch (error) {
     const status = error instanceof HttpError ? error.status : 500;
     const message = error instanceof Error ? error.message : 'erro';

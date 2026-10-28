@@ -16,6 +16,8 @@ import AdminSuggestions from './pages/AdminSuggestions';
 import AdminReviews from './pages/AdminReviews';
 import AdminUpdates from './pages/AdminUpdates';
 import AdminAutomations from './pages/AdminAutomations';
+import AdminLog from './pages/AdminLog';
+import Profile from './pages/Profile';
 import NotificationBell from './components/NotificationBell';
 
 const SECRET_THEME_STORAGE_KEY = 'biblio.secretTheme.v1';
@@ -175,6 +177,7 @@ function Navbar({ variant, onSecretTitleClick }) {
   if (variant === 'catalog') {
     return (
       <nav className="navbar catalog-navbar glass">
+        {isUser() && <Link to="/perfil" className={`nav-link catalog-profile-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>Perfil</Link>}
         <Link to="/" className="nav-brand" onClick={clickSecretTitle}>{brand}</Link>
         {isUser() && <NotificationBell reader />}
       </nav>
@@ -220,7 +223,9 @@ function Navbar({ variant, onSecretTitleClick }) {
             <Link onClick={closeAdminMenu} to="/admin/automacoes" className={`nav-link ${loc.pathname === '/admin/automacoes' ? 'active' : ''}`}>Automações</Link>
           )}
           <Link onClick={closeAdminMenu} to="/admin/configuracoes" className={`nav-link ${loc.pathname === '/admin/configuracoes' ? 'active' : ''}`}>Configurações</Link>
+          <Link onClick={closeAdminMenu} to="/admin/log" className={`nav-link ${loc.pathname === '/admin/log' ? 'active' : ''}`}>Log</Link>
           <Link onClick={closeAdminMenu} to="/admin/updates" className={`nav-link ${loc.pathname === '/admin/updates' ? 'active' : ''}`}>Updates</Link>
+          <Link onClick={closeAdminMenu} to="/perfil" className={`nav-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>Perfil</Link>
           <div className="nav-notifications-desktop">
             <NotificationBell />
           </div>
@@ -246,6 +251,11 @@ function SuperAdminGuard({ children }) {
   return children;
 }
 
+function SessionGuard({ children }) {
+  if (!getProfile()) return <Navigate to="/" replace />;
+  return children;
+}
+
 export default function App() {
   const loc = useLocation();
   const [secretOpen, setSecretOpen] = useState(false);
@@ -253,6 +263,7 @@ export default function App() {
   const secretClicks = useRef({ count: 0, timer: null });
   const isCatalog = loc.pathname === '/catalogo';
   const isAdminPage = loc.pathname.startsWith('/admin') && loc.pathname !== '/admin-login';
+  const isProfilePage = loc.pathname === '/perfil';
 
   useEffect(() => {
     try {
@@ -293,12 +304,13 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {isCatalog && <Navbar variant="catalog" onSecretTitleClick={handleSecretTitleClick} />}
-      {isAdminPage && <Navbar variant="admin" onSecretTitleClick={handleSecretTitleClick} />}
+      {(isCatalog || (isProfilePage && !isAdmin())) && <Navbar variant="catalog" onSecretTitleClick={handleSecretTitleClick} />}
+      {(isAdminPage || (isProfilePage && isAdmin())) && <Navbar variant="admin" onSecretTitleClick={handleSecretTitleClick} />}
       <Routes>
         <Route path="/" element={<Landing onSecretTitleClick={handleSecretTitleClick} />} />
         <Route path="/primeiro-acesso" element={<CompleteSetup />} />
         <Route path="/catalogo" element={<UserCatalog />} />
+        <Route path="/perfil" element={<SessionGuard><Profile /></SessionGuard>} />
         <Route path="/admin-login" element={<Login />} />
         <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
         <Route path="/admin/biblioteca" element={<AdminGuard><UserCatalog /></AdminGuard>} />
@@ -311,6 +323,7 @@ export default function App() {
         <Route path="/admin/avaliacoes" element={<AdminGuard><AdminReviews /></AdminGuard>} />
         <Route path="/admin/automacoes" element={<SuperAdminGuard><AdminAutomations /></SuperAdminGuard>} />
         <Route path="/admin/configuracoes" element={<AdminGuard><AdminSettings /></AdminGuard>} />
+        <Route path="/admin/log" element={<AdminGuard><AdminLog /></AdminGuard>} />
         <Route path="/admin/updates" element={<AdminGuard><AdminUpdates /></AdminGuard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

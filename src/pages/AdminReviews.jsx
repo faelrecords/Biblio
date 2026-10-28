@@ -69,11 +69,6 @@ export default function AdminReviews() {
               </div>
               <div style={{ marginTop: 8 }}><Stars value={item.rating} /></div>
               {item.comment && <p style={{ marginTop: 10, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.comment}</p>}
-              <div style={{ marginTop: 10 }}>
-                <span className={`badge ${item.counts_as_read && item.comment?.trim() ? 'approved' : 'pending'}`}>
-                  {item.counts_as_read && item.comment?.trim() ? 'Conta como leitura' : 'Não conta como leitura'}
-                </span>
-              </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               {item.comment?.trim() && (
