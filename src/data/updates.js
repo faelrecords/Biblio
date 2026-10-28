@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.31',
+    date: '2026-10-28',
+    title: 'Navegação e Log mais claros',
+    summary: 'O acesso ao perfil e o histórico administrativo ficaram mais fáceis de identificar.',
+    items: [
+      'O nome do usuário agora possui ícone e destaque visual para indicar que abre o perfil.',
+      'O Log passou a exibir descrições em linguagem simples, sem campos técnicos ou siglas de requisição.',
+      'Detalhes repetidos ou internos foram removidos da visualização do histórico.'
+    ]
+  },
+  {
     version: 'v1.6.30',
     date: '2026-10-28',
     title: 'Controle e recuperação do Log',

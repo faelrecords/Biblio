@@ -148,6 +148,15 @@ function SecretPopup({ onClose }) {
   );
 }
 
+function ProfileIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+  );
+}
+
 function Navbar({ variant, onSecretTitleClick }) {
   const admin = isAdmin();
   const profile = getProfile();
@@ -177,7 +186,12 @@ function Navbar({ variant, onSecretTitleClick }) {
   if (variant === 'catalog') {
     return (
       <nav className="navbar catalog-navbar glass">
-        {isUser() && <Link to="/perfil" className={`nav-link catalog-profile-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>{profile?.name || 'Minha conta'}</Link>}
+        {isUser() && (
+          <Link to="/perfil" className={`nav-link catalog-profile-link profile-name-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>
+            <ProfileIcon />
+            {profile?.name || 'Minha conta'}
+          </Link>
+        )}
         <Link to="/" className="nav-brand" onClick={clickSecretTitle}>{brand}</Link>
         {isUser() && <NotificationBell reader />}
       </nav>
@@ -228,7 +242,8 @@ function Navbar({ variant, onSecretTitleClick }) {
           <div className="nav-notifications-desktop">
             <NotificationBell />
           </div>
-          <Link onClick={closeAdminMenu} to="/perfil" className={`nav-user nav-user-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>
+          <Link onClick={closeAdminMenu} to="/perfil" className={`nav-user nav-user-link profile-name-link ${loc.pathname === '/perfil' ? 'active' : ''}`}>
+            <ProfileIcon />
             {profile?.name || profile?.username}
           </Link>
           <button className="btn sm ghost" onClick={logout}>Sair</button>
