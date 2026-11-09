@@ -184,11 +184,6 @@ function sanitizeAuditDetails(value: unknown, key = ''): unknown {
 
 function auditAction(method: string, path: string, input: Record<string, unknown>) {
   if (path === '/settings') return 'Atualizou as configurações';
-  if (path === '/upload') return 'Enviou uma imagem';
-  if (path === '/me/avatar') return 'Alterou a própria foto';
-  if (path === '/me/profile') return 'Atualizou o próprio perfil';
-  if (path === '/me/password') return 'Alterou a própria senha';
-  if (path === '/me/audit-log') return input.enabled === false ? 'Desativou o próprio registro no Log' : 'Ativou o próprio registro no Log';
   if (path === '/books' && method === 'POST') return `Cadastrou o livro ${String(input.title || '').trim() || ''}`.trim();
   if (/^\/books\/\d+$/.test(path) && method === 'PUT') return `Atualizou o livro ${path.split('/').pop()}`;
   if (/^\/books\/\d+$/.test(path) && method === 'DELETE') return `Excluiu o livro ${path.split('/').pop()}`;
@@ -209,11 +204,17 @@ function auditAction(method: string, path: string, input: Record<string, unknown
   return `${method} ${path}`;
 }
 
+function isRelevantAuditPath(path: string) {
+  if (path.startsWith('/me/') || path.startsWith('/audit-logs') || path === '/upload') return false;
+  if (/^\/notifications\/\d+\/read$/.test(path) || path === '/notifications/read-all') return false;
+  return true;
+}
+
 async function auditSuccessfulAdminMutation(req: Request, response: Response, input: Record<string, unknown>) {
   if (!['POST', 'PUT', 'DELETE'].includes(req.method) || response.status >= 400) return;
   const path = requestPath(req);
   if (path.startsWith('/auth/') || path.startsWith('/setup/')) return;
-  if (path === '/me/audit-log' || path.startsWith('/audit-logs')) return;
+  if (!isRelevantAuditPath(path)) return;
   const header = req.headers.get('authorization') || '';
   const token = header.replace(/^Bearer\s+/i, '');
   if (!token) return;
@@ -1849,7 +1850,7 @@ async function handle(req: Request) {
       .order('created_at', { ascending: false })
       .limit(limit);
     dbError(error);
-    return json(req, data || []);
+    return json(req, (data || []).filter(item => isRelevantAuditPath(String(item.path || ''))));
   }
 
   const auditLogId = path.match(/^\/audit-logs\/(\d+)$/)?.[1];

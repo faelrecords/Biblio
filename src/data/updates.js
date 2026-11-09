@@ -1,5 +1,16 @@
 export const updates = [
   {
+    version: 'v1.6.32',
+    date: '2026-11-09',
+    title: 'Log focado em ações relevantes',
+    summary: 'O histórico administrativo agora prioriza movimentações e alterações que afetam o sistema e outros usuários.',
+    items: [
+      'Ações de marcar notificações como lidas deixaram de ser registradas.',
+      'Alterações do próprio perfil e envios auxiliares de imagem também não ocupam mais o Log.',
+      'Registros antigos dessas ações de baixa relevância deixaram de aparecer na visualização do histórico.'
+    ]
+  },
+  {
     version: 'v1.6.31',
     date: '2026-10-28',
     title: 'Navegação e Log mais claros',

@@ -33,8 +33,6 @@ function friendlyAction(item) {
   if (item.path === '/loans/self-approve') return 'Registrou um empréstimo direto';
   if (item.path === '/loans/request') return 'Solicitou um empréstimo';
   if (item.path === '/notifications/send-all') return 'Enviou um aviso para todos os usuários';
-  if (/^\/notifications\/\d+\/read$/.test(item.path)) return 'Marcou uma notificação como lida';
-  if (item.path === '/notifications/read-all') return 'Marcou todas as notificações como lidas';
   return 'Realizou uma ação administrativa';
 }
 
